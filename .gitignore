@@ -1,0 +1,6 @@
+__pycache__/
+venv/
+.venv/
+
+# my personal data, not for github
+expenses.json
