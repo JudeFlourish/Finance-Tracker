@@ -83,7 +83,11 @@ python-finance-tracker/
 ├── finance_tracker/
 │   ├── __init__.py          # create_app(): config and routes
 │   ├── config.py            # settings from environment variables
-│   ├── routes.py            # routes, validation, persistence, chart data
+│   ├── categories.py        # category list and chart colours
+│   ├── models.py            # Entry base class (shared by expenses and income)
+│   ├── validation.py        # ValidationError + shared field parsers
+│   ├── web.py               # redirect_back(): safe return to the previous page
+│   ├── routes.py            # routes, persistence, chart data
 │   ├── templates/
 │   │   └── index.html       # Dashboard (Jinja2 template)
 │   └── static/
@@ -92,7 +96,8 @@ python-finance-tracker/
 ├── tests/
 │   ├── conftest.py          # app and client fixtures
 │   ├── test_app_factory.py
-│   └── test_expenses.py
+│   ├── test_expenses.py
+│   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
 └── uv.lock                  # pinned versions
 ```
