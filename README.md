@@ -42,6 +42,7 @@ git clone https://github.com/firdavz/python-finance-tracker.git
 cd python-finance-tracker
 
 uv sync            # creates .venv and installs the exact versions from uv.lock
+cp .env.example .env   # then put your own SECRET_KEY in .env
 ```
 
 ### Run
@@ -57,11 +58,13 @@ Then open **http://127.0.0.1:5000** in your browser.
 
 ### Configuration
 
-Settings are read from environment variables. Both are optional.
+Settings are read from environment variables, or from a `.env` file in the project folder.
+`.env` is git-ignored; `.env.example` shows every setting with placeholder values. All are optional.
 
-| Variable     | Default                          | Purpose                     |
-|--------------|----------------------------------|-----------------------------|
-| `SECRET_KEY` | random key made at startup       | Flask secret key            |
+| Variable     | Default                           | Purpose                     |
+|--------------|-----------------------------------|-----------------------------|
+| `SECRET_KEY` | random key made at startup        | Flask secret key            |
+| `DATABASE`   | `instance/finance.db`             | SQLite database file        |
 | `DATA_FILE`  | `expenses.json` in project folder | Where expenses are saved    |
 
 ### Tests

@@ -4,7 +4,13 @@
 #   uv run python financeapp.py
 #   or: uv run flask --app financeapp run --debug
 
+from dotenv import load_dotenv
+
 from finance_tracker import create_app
+
+# read .env before the app is built, so its settings are used
+# (flask run does this by itself, python financeapp.py does not)
+load_dotenv()
 
 app = create_app()
 
