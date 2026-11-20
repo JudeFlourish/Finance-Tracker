@@ -1,6 +1,6 @@
 import os
 
-from finance_tracker import create_app
+from finance_tracker import config, create_app
 
 
 def clear_env(monkeypatch):
@@ -8,13 +8,13 @@ def clear_env(monkeypatch):
         monkeypatch.delenv(name, raising=False)
 
 
-def test_default_config(monkeypatch):
+def test_default_config(monkeypatch, tmp_path):
+    # checks the settings only, so no real database is created
     clear_env(monkeypatch)
-    app = create_app()
-    assert not app.testing
-    assert app.config["SECRET_KEY"]
-    assert app.config["DATABASE"] == os.path.join(app.instance_path, "finance.db")
-    assert app.config["DATA_FILE"].endswith("expenses.json")
+    settings = config.from_environment(str(tmp_path))
+    assert settings["SECRET_KEY"]
+    assert settings["DATABASE"] == os.path.join(str(tmp_path), "finance.db")
+    assert settings["DATA_FILE"].endswith("expenses.json")
 
 
 def test_config_from_environment(monkeypatch, tmp_path):
@@ -22,6 +22,7 @@ def test_config_from_environment(monkeypatch, tmp_path):
     monkeypatch.setenv("SECRET_KEY", "test-key")
     monkeypatch.setenv("DATABASE", str(tmp_path / "test.db"))
     app = create_app()
+    assert not app.testing
     assert app.config["SECRET_KEY"] == "test-key"
     assert app.config["DATABASE"] == str(tmp_path / "test.db")
 

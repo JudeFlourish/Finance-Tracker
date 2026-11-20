@@ -56,6 +56,13 @@ Then open **http://127.0.0.1:5000** in your browser.
 
 `expenses.json` is created automatically the first time you add an expense.
 
+The SQLite database (`instance/finance.db`) and its tables are also created on startup.
+To create them without starting the server:
+
+```bash
+uv run flask --app financeapp init-db
+```
+
 ### Configuration
 
 Settings are read from environment variables, or from a `.env` file in the project folder.
@@ -73,7 +80,7 @@ Settings are read from environment variables, or from a `.env` file in the proje
 uv run pytest
 ```
 
-Each test uses its own temporary data file, so your real `expenses.json` is never touched.
+Each test uses its own temporary database and data file, so your real data is never touched.
 
 ## Project Structure
 
@@ -81,8 +88,10 @@ Each test uses its own temporary data file, so your real `expenses.json` is neve
 python-finance-tracker/
 ├── financeapp.py            # entry point: create_app() and run
 ├── finance_tracker/
-│   ├── __init__.py          # create_app(): config and routes
+│   ├── __init__.py          # create_app(): config, database and routes
 │   ├── config.py            # settings from environment variables
+│   ├── db.py                # SQLite connection per request, init-db command
+│   ├── schema.sql           # tables, CHECK constraints, indexes
 │   ├── categories.py        # category list and chart colours
 │   ├── models.py            # Entry base class (shared by expenses and income)
 │   ├── validation.py        # ValidationError + shared field parsers
@@ -94,8 +103,9 @@ python-finance-tracker/
 │       ├── style.css        # Layout and dark theme
 │       └── script.js        # Chart rendering and delete confirmation
 ├── tests/
-│   ├── conftest.py          # app and client fixtures
+│   ├── conftest.py          # app, client and conn fixtures (temporary database)
 │   ├── test_app_factory.py
+│   ├── test_db.py           # schema, constraints, connection handling
 │   ├── test_expenses.py
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
