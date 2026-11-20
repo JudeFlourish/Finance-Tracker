@@ -4,3 +4,10 @@ venv/
 
 # my personal data, not for github
 expenses.json
+
+# local settings and secrets
+.env
+
+# SQLite database (created in instance/)
+instance/
+*.db

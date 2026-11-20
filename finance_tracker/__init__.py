@@ -10,7 +10,7 @@ from . import config
 
 def create_app(test_config=None):
     app = Flask(__name__)
-    app.config.from_mapping(config.from_environment())
+    app.config.from_mapping(config.from_environment(app.instance_path))
     if test_config:
         app.config.update(test_config)
 
