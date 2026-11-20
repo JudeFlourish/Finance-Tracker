@@ -47,13 +47,13 @@
             </form>
 
             <p class="total-row">Total: <span class="pill">${{ "%.2f"|format(total) }}</span></p>
-            <a class="small-link" href="{{ url_for('export_csv', start=start, end=end, category=category) }}">Export CSV (current filter)</a>
+            <a class="small-link" href="{{ url_for('expenses.export_csv', start=start, end=end, category=category) }}">Export CSV (current filter)</a>
         </section>
 
         {% if edit_expense %}
         <section class="card">
             <h2>Edit Expense</h2>
-            <form action="{{ url_for('update_expense', expense_id=edit_expense.id) }}" method="post">
+            <form action="{{ url_for('expenses.update_expense', expense_id=edit_expense.id) }}" method="post">
                 <div class="field">
                     <label>Description</label>
                     <input type="text" name="description" value="{{ edit_expense.description }}" required>
@@ -135,7 +135,7 @@
                     <td class="right">${{ "%.2f"|format(e.amount) }}</td>
                     <td class="right">
                         <div class="row-actions">
-                            <form action="{{ url_for('edit_expense', expense_id=e.id) }}" method="get" class="inline-form">
+                            <form action="{{ url_for('expenses.edit_expense', expense_id=e.id) }}" method="get" class="inline-form">
                                 <button type="submit" class="btn btn-edit">Edit</button>
                             </form>
                             <form action="/delete/{{ e.id }}" method="post" class="delete-form">

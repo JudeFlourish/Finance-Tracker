@@ -48,11 +48,21 @@ uv sync            # creates .venv and installs the exact versions from uv.lock
 
 ```bash
 uv run python financeapp.py
+# or: uv run flask --app financeapp run --debug
 ```
 
 Then open **http://127.0.0.1:5000** in your browser.
 
 `expenses.json` is created automatically the first time you add an expense.
+
+### Configuration
+
+Settings are read from environment variables. Both are optional.
+
+| Variable     | Default                          | Purpose                     |
+|--------------|----------------------------------|-----------------------------|
+| `SECRET_KEY` | random key made at startup       | Flask secret key            |
+| `DATA_FILE`  | `expenses.json` in project folder | Where expenses are saved    |
 
 ### Tests
 
@@ -60,19 +70,28 @@ Then open **http://127.0.0.1:5000** in your browser.
 uv run pytest
 ```
 
+Each test uses its own temporary data file, so your real `expenses.json` is never touched.
+
 ## Project Structure
 
 ```
 python-finance-tracker/
-├── financeapp.py        # Flask app: routes, validation, persistence, chart data
-├── templates/
-│   └── index.html       # Dashboard (Jinja2 template)
-├── static/
-│   ├── style.css        # Layout and dark theme
-│   └── script.js        # Chart rendering and delete confirmation
-├── test_app.py          # pytest tests
-├── pyproject.toml       # dependencies
-└── uv.lock              # pinned versions
+├── financeapp.py            # entry point: create_app() and run
+├── finance_tracker/
+│   ├── __init__.py          # create_app(): config and routes
+│   ├── config.py            # settings from environment variables
+│   ├── routes.py            # routes, validation, persistence, chart data
+│   ├── templates/
+│   │   └── index.html       # Dashboard (Jinja2 template)
+│   └── static/
+│       ├── style.css        # Layout and dark theme
+│       └── script.js        # Chart rendering and delete confirmation
+├── tests/
+│   ├── conftest.py          # app and client fixtures
+│   ├── test_app_factory.py
+│   └── test_expenses.py
+├── pyproject.toml           # dependencies
+└── uv.lock                  # pinned versions
 ```
 
 ## Routes
