@@ -1,0 +1,21 @@
+[project]
+name = "finance-tracker"
+version = "1.0.0"
+description = "Web-based expense tracker built with Flask"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+pythonpath = ["."]
+
+[tool.uv]
+package = false

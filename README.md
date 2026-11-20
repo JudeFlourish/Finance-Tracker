@@ -22,13 +22,18 @@ The goal of this project was to learn server-side web development: routing, hand
 | Frontend | HTML (Jinja2 templates), CSS, JavaScript |
 | Charts   | Chart.js                            |
 | Storage  | JSON file                           |
+| Tooling  | uv (dependencies), pytest (tests)   |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.9+
-- pip
+- [uv](https://docs.astral.sh/uv/). It installs the right Python version (3.10+) for you if needed.
+
+| OS | Install uv |
+|---|---|
+| Windows (PowerShell) | `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 \| iex"` |
+| macOS / Linux / WSL | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 
 ### Installation
 
@@ -36,23 +41,24 @@ The goal of this project was to learn server-side web development: routing, hand
 git clone https://github.com/firdavz/python-finance-tracker.git
 cd python-finance-tracker
 
-# optional: create a virtual environment
-python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # macOS / Linux
-
-pip install -r requirements.txt
+uv sync            # creates .venv and installs the exact versions from uv.lock
 ```
 
 ### Run
 
 ```bash
-python financeapp.py
+uv run python financeapp.py
 ```
 
 Then open **http://127.0.0.1:5000** in your browser.
 
 `expenses.json` is created automatically the first time you add an expense.
+
+### Tests
+
+```bash
+uv run pytest
+```
 
 ## Project Structure
 
@@ -64,7 +70,9 @@ python-finance-tracker/
 ├── static/
 │   ├── style.css        # Layout and dark theme
 │   └── script.js        # Chart rendering and delete confirmation
-└── requirements.txt
+├── test_app.py          # pytest tests
+├── pyproject.toml       # dependencies
+└── uv.lock              # pinned versions
 ```
 
 ## Routes
