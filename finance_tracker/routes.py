@@ -8,23 +8,10 @@ from datetime import date
 
 from flask import Blueprint, current_app, render_template, request, redirect, url_for, Response
 
+from .categories import CATEGORIES, COLORS
+from .validation import ValidationError, parse_amount, parse_category, parse_date, parse_text
+
 bp = Blueprint("expenses", __name__)
-
-categories = ["Food", "Transport", "Rent", "Utilities", "Health",
-              "Entertainment", "Education", "Business", "Other"]
-
-# colors for the pie chart, I picked them by hand
-colors = {
-    "Food": "#36a2eb",
-    "Transport": "#ff6384",
-    "Rent": "#9966ff",
-    "Utilities": "#ff9f40",
-    "Health": "#4bc0c0",
-    "Entertainment": "#ffcd56",
-    "Education": "#a3e635",
-    "Business": "#f472b6",
-    "Other": "#94a3b8",
-}
 
 
 def data_file():
@@ -87,7 +74,7 @@ def build_dashboard_context(expenses, start="", end="", category="All"):
     pie_labels = []
     pie_values = []
     pie_colors = []
-    for c in categories:
+    for c in CATEGORIES:
         amount = 0
         for e in filtered:
             if e["category"] == c:
@@ -95,7 +82,7 @@ def build_dashboard_context(expenses, start="", end="", category="All"):
         if amount > 0:
             pie_labels.append(c)
             pie_values.append(amount)
-            pie_colors.append(colors[c])
+            pie_colors.append(COLORS[c])
 
     # bar chart: total per day
     by_date = {}
@@ -120,7 +107,7 @@ def build_dashboard_context(expenses, start="", end="", category="All"):
     return {
         "expenses": filtered,
         "total": total,
-        "categories": categories,
+        "categories": CATEGORIES,
         "chart_data": chart_data,
         "start": start,
         "end": end,
@@ -155,33 +142,29 @@ def edit_expense(expense_id):
     return render_template("index.html", **context)
 
 
+def read_expense_form():
+    # checking inputs again on the server
+    # (the browser checks too but someone can skip that)
+    # raises ValidationError with a message for the user
+    return {
+        "description": parse_text(request.form.get("description"), "Please write a description"),
+        "amount": parse_amount(request.form.get("amount")),
+        "date": parse_date(request.form.get("date")),
+        "category": parse_category(request.form.get("category")),
+    }
+
+
 @bp.route("/update/<int:expense_id>", methods=["POST"])
 def update_expense(expense_id):
-    description = request.form.get("description", "").strip()
-    amount = request.form.get("amount", "")
-    day = request.form.get("date", "")
-    category = request.form.get("category", "Other")
-
-    if description == "":
-        return redirect(url_for("expenses.index", error="Please write a description"))
     try:
-        amount = float(amount)
-    except ValueError:
-        return redirect(url_for("expenses.index", error="Amount must be a number"))
-    if amount <= 0:
-        return redirect(url_for("expenses.index", error="Please enter a positive number"))
-    if day == "":
-        day = str(date.today())
-    if category not in categories:
-        category = "Other"
+        fields = read_expense_form()
+    except ValidationError as e:
+        return redirect(url_for("expenses.index", error=str(e)))
 
     expenses = load_expenses()
     for e in expenses:
         if e["id"] == expense_id:
-            e["description"] = description
-            e["amount"] = amount
-            e["date"] = day
-            e["category"] = category
+            e.update(fields)
             break
     save_expenses(expenses)
 
@@ -190,25 +173,10 @@ def update_expense(expense_id):
 
 @bp.route("/add", methods=["POST"])
 def add_expense():
-    description = request.form.get("description", "").strip()
-    amount = request.form.get("amount", "")
-    day = request.form.get("date", "")
-    category = request.form.get("category", "Other")
-
-    # checking inputs again on the server
-    # (the browser checks too but someone can skip that)
-    if description == "":
-        return redirect(url_for("expenses.index", error="Please write a description"))
     try:
-        amount = float(amount)
-    except ValueError:
-        return redirect(url_for("expenses.index", error="Amount must be a number"))
-    if amount <= 0:
-        return redirect(url_for("expenses.index", error="Please enter a positive number"))
-    if day == "":
-        day = str(date.today())
-    if category not in categories:
-        category = "Other"
+        fields = read_expense_form()
+    except ValidationError as e:
+        return redirect(url_for("expenses.index", error=str(e)))
 
     expenses = load_expenses()
 
@@ -219,13 +187,7 @@ def add_expense():
         if e["id"] >= new_id:
             new_id = e["id"] + 1
 
-    expense = {
-        "id": new_id,
-        "description": description,
-        "amount": amount,
-        "date": day,
-        "category": category,
-    }
+    expense = {"id": new_id, **fields}
     expenses.append(expense)
     save_expenses(expenses)
 
