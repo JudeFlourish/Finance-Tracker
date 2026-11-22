@@ -15,7 +15,7 @@ def test_parse_text_trims_spaces():
     assert parse_text("  Lunch  ", "msg") == "Lunch"
 
 
-@pytest.mark.parametrize("value", ["", "   ", None])
+@pytest.mark.parametrize("value", ["", "   ", None, 123, ["Lunch"]])
 def test_parse_text_rejects_blank(value):
     with pytest.raises(ValidationError, match="Please write a description"):
         parse_text(value, "Please write a description")
@@ -23,12 +23,12 @@ def test_parse_text_rejects_blank(value):
 
 # parse_amount
 
-@pytest.mark.parametrize("value, expected", [("12.5", 12.5), ("3", 3.0), (" 7 ", 7.0)])
+@pytest.mark.parametrize("value, expected", [("12.5", 12.5), ("3", 3.0), (" 7 ", 7.0), (12.5, 12.5), (3, 3.0)])
 def test_parse_amount_accepts_positive_numbers(value, expected):
     assert parse_amount(value) == expected
 
 
-@pytest.mark.parametrize("value", ["abc", "", None, "12,50"])
+@pytest.mark.parametrize("value", ["abc", "", None, "12,50", True, False, [1]])
 def test_parse_amount_rejects_non_numbers(value):
     with pytest.raises(ValidationError, match="Amount must be a number"):
         parse_amount(value)
@@ -51,7 +51,7 @@ def test_parse_date_blank_means_today(value):
     assert parse_date(value) == date.today().isoformat()
 
 
-@pytest.mark.parametrize("value", ["2026-02-30", "2026-13-01", "05/11/2026", "2026-1-5", "yesterday"])
+@pytest.mark.parametrize("value", ["2026-02-30", "2026-13-01", "05/11/2026", "2026-1-5", "yesterday", 20261105, ["2026-11-05"]])
 def test_parse_date_rejects_invalid(value):
     with pytest.raises(ValidationError, match="Please enter a valid date"):
         parse_date(value)
