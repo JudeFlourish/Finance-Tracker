@@ -7,7 +7,7 @@ import os
 
 from flask import Flask
 
-from . import config, db
+from . import config, db, importer
 
 
 def create_app(test_config=None):
@@ -19,6 +19,7 @@ def create_app(test_config=None):
     # make the folder for the SQLite file (instance/ by default, not committed)
     os.makedirs(os.path.dirname(os.path.abspath(app.config["DATABASE"])), exist_ok=True)
     db.init_app(app)
+    importer.init_app(app)
 
     from .expenses.routes import bp
     app.register_blueprint(bp)

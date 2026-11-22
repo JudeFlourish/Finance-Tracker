@@ -61,6 +61,19 @@ with its tables on startup. To create it without starting the server:
 uv run flask --app financeapp init-db
 ```
 
+### Import old data
+
+Earlier versions saved expenses in `expenses.json`. To move them into the database:
+
+```bash
+uv run flask --app financeapp import-json expenses.json
+```
+
+Every expense is checked first with the same rules as the add form. If any one is
+invalid, or the file is missing or not valid JSON, nothing is imported. Old ids are
+not kept; the database gives each expense a new one. Run it only once, because
+running it again adds the same expenses a second time.
+
 ### Configuration
 
 Settings are read from environment variables, or from a `.env` file in the project folder.
@@ -93,6 +106,7 @@ python-finance-tracker/
 │   ├── models.py            # Entry base class (shared by expenses and income)
 │   ├── validation.py        # ValidationError + shared field parsers
 │   ├── web.py               # redirect_back(): safe return to the previous page
+│   ├── importer.py          # flask import-json command (old expenses.json)
 │   ├── expenses/
 │   │   ├── models.py        # Expense
 │   │   ├── filters.py       # ExpenseFilter (date range and category from the url)
@@ -111,6 +125,7 @@ python-finance-tracker/
 │   ├── test_db.py           # schema, constraints, connection handling
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
+│   ├── test_importer.py     # import-json: good, bad and partly bad files
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
 └── uv.lock                  # pinned versions

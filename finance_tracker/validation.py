@@ -15,13 +15,16 @@ class ValidationError(ValueError):
 
 
 def parse_text(value, message):
-    text = (value or "").strip()
-    if text == "":
+    # forms always send strings, but an imported file can hold anything
+    if not isinstance(value, str) or value.strip() == "":
         raise ValidationError(message)
-    return text
+    return value.strip()
 
 
 def parse_amount(value):
+    # float(True) is 1.0, so a true/false value would pass as an amount
+    if isinstance(value, bool):
+        raise ValidationError("Amount must be a number")
     try:
         amount = float(value)
     except (TypeError, ValueError):
@@ -34,7 +37,11 @@ def parse_amount(value):
 
 def parse_date(value):
     """Return the date as "YYYY-MM-DD". An empty value means today."""
-    value = (value or "").strip()
+    if value is None:
+        value = ""
+    if not isinstance(value, str):
+        raise ValidationError("Please enter a valid date")
+    value = value.strip()
     if value == "":
         return date.today().isoformat()
     try:
