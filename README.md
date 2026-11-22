@@ -97,6 +97,11 @@ python-finance-tracker/
 │   ├── validation.py        # ValidationError + shared field parsers
 │   ├── web.py               # redirect_back(): safe return to the previous page
 │   ├── routes.py            # routes, persistence, chart data
+│   ├── expenses/
+│   │   ├── models.py        # Expense
+│   │   ├── filters.py       # ExpenseFilter (date range and category from the url)
+│   │   ├── validation.py    # validate_expense()
+│   │   └── repository.py    # ExpenseRepository (SQL only)
 │   ├── templates/
 │   │   └── index.html       # Dashboard (Jinja2 template)
 │   └── static/
@@ -106,6 +111,7 @@ python-finance-tracker/
 │   ├── conftest.py          # app, client and conn fixtures (temporary database)
 │   ├── test_app_factory.py
 │   ├── test_db.py           # schema, constraints, connection handling
+│   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
