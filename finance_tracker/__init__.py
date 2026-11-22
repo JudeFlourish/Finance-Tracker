@@ -20,6 +20,6 @@ def create_app(test_config=None):
     os.makedirs(os.path.dirname(os.path.abspath(app.config["DATABASE"])), exist_ok=True)
     db.init_app(app)
 
-    from .routes import bp
+    from .expenses.routes import bp
     app.register_blueprint(bp)
     return app

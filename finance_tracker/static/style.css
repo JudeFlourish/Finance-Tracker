@@ -195,6 +195,15 @@ select:focus {
     margin-bottom: 20px;
 }
 
+.success {
+    background: #052e16;
+    border: 1px solid #15803d;
+    color: #bbf7d0;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
 /* ---------- total ---------- */
 
 .total-row {

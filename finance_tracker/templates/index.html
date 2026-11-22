@@ -16,9 +16,10 @@
     <h1>Dashboard</h1>
     <p class="subtitle">Track spending, filter by date/category, and visualize instantly.</p>
 
-    {% if error %}
-    <div class="error">{{ error }}</div>
-    {% endif %}
+    <!-- messages from the last add, edit or delete, shown once -->
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="{{ category }}">{{ message }}</div>
+    {% endfor %}
 
     <div class="top">
         <!-- filters use GET so they stay in the url -->
@@ -54,6 +55,7 @@
         <section class="card">
             <h2>Edit Expense</h2>
             <form action="{{ url_for('expenses.update_expense', expense_id=edit_expense.id) }}" method="post">
+                <input type="hidden" name="next" value="{{ next_url }}">
                 <div class="field">
                     <label>Description</label>
                     <input type="text" name="description" value="{{ edit_expense.description }}" required>
@@ -77,13 +79,14 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-blue full">Save Changes</button>
-                <a href="/" class="btn full" style="display:block; text-align:center; margin-top:12px;">Cancel</a>
+                <a href="{{ next_url }}" class="btn full" style="display:block; text-align:center; margin-top:12px;">Cancel</a>
             </form>
         </section>
         {% else %}
         <section class="card">
             <h2>Add Expense</h2>
             <form action="/add" method="post">
+                <input type="hidden" name="next" value="{{ next_url }}">
                 <div class="field">
                     <label>Description</label>
                     <input type="text" name="description" placeholder="e.g. Lunch" required>
@@ -136,9 +139,11 @@
                     <td class="right">
                         <div class="row-actions">
                             <form action="{{ url_for('expenses.edit_expense', expense_id=e.id) }}" method="get" class="inline-form">
+                                <input type="hidden" name="next" value="{{ next_url }}">
                                 <button type="submit" class="btn btn-edit">Edit</button>
                             </form>
                             <form action="/delete/{{ e.id }}" method="post" class="delete-form">
+                                <input type="hidden" name="next" value="{{ next_url }}">
                                 <button type="submit" class="btn-delete">Delete</button>
                             </form>
                         </div>
@@ -177,7 +182,7 @@
 <!-- Chart.js library for the charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-    // data comes from app.py, python dict -> javascript object
+    // data comes from expenses/charts.py, python dict -> javascript object
     const chartData = {{ chart_data|tojson }};
 </script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
