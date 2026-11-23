@@ -127,8 +127,11 @@ python-finance-tracker/
 │   ├── dashboard/           # US-04/US-05 (Sprint 2): home dashboard, reads other features
 │   ├── templates/
 │   │   ├── base.html        # shared layout: nav bar, flash messages
+│   │   ├── 404.html         # page not found, in the app's layout
 │   │   └── expenses/
-│   │       └── list.html    # expenses page (filters, form, list, charts)
+│   │       ├── _fields.html # the expense form fields, shared by add and edit
+│   │       ├── list.html    # expenses page (filters, add form, list, charts)
+│   │       └── edit.html    # edit one expense
 │   └── static/
 │       ├── style.css        # Layout and dark theme
 │       └── script.js        # Chart rendering and delete confirmation
@@ -152,8 +155,8 @@ python-finance-tracker/
 | GET    | `/`                     | Home. Goes to `/expenses/` until the dashboard is built            |
 | GET    | `/expenses/`            | Expenses page. Optional query params: `start`, `end`, `category`   |
 | POST   | `/expenses/add`         | Validates the form and creates an expense                          |
-| GET    | `/expenses/edit/<id>`   | Expenses page with the edit form filled in for that expense        |
-| POST   | `/expenses/update/<id>` | Validates the form and saves the changes                           |
+| GET    | `/expenses/<id>/edit`   | Edit page, filled in with the expense's current values             |
+| POST   | `/expenses/<id>/edit`   | Validates and saves; on an error shows the form again as typed     |
 | POST   | `/expenses/delete/<id>` | Deletes an expense by id                                           |
 | GET    | `/expenses/export`      | Downloads filtered expenses as CSV (same query params as the page) |
 

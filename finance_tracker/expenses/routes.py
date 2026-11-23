@@ -22,11 +22,9 @@ def _repo():
     return ExpenseRepository(get_db())
 
 
-def _render_page(next_url, edit_expense=None):
-    """The expenses page: filters, add or edit form, list, total and charts.
-
-    next_url is the list page (with its filter) that forms go back to.
-    """
+@bp.get("/")
+def index():
+    """The expenses page: filters, add form, list, total and charts."""
     expense_filter = ExpenseFilter.from_args(request.args)
     expenses = _repo().list(expense_filter)
     return render_template(
@@ -35,48 +33,44 @@ def _render_page(next_url, edit_expense=None):
         total=total(expenses),
         categories=CATEGORIES,
         chart_data=chart_data(expenses),
-        edit_expense=edit_expense,
-        next_url=next_url,
+        # the page forms go back to; full_path ends with "?" when there is no filter
+        next_url=request.full_path.rstrip("?"),
         today=date.today().isoformat(),
         **expense_filter.as_args(),
     )
 
 
-@bp.get("/")
-def index():
-    # full_path ends with "?" when there is no filter, e.g. "/expenses/?"
-    return _render_page(next_url=request.full_path.rstrip("?"))
-
-
-@bp.get("/edit/<int:expense_id>")
+@bp.route("/<int:expense_id>/edit", methods=["GET", "POST"])
 def edit_expense(expense_id):
-    expense = _repo().get(expense_id)
+    repo = _repo()
+    expense = repo.get(expense_id)
     if expense is None:
         abort(404)
-    next_url = request.args.get("next", "")
+
+    # where Cancel and Save go back to: the list the user came from
+    next_url = request.values.get("next", "")
     if not is_safe_path(next_url):
         next_url = url_for("expenses.index")
-    return _render_page(next_url=next_url, edit_expense=expense)
 
+    if request.method == "POST":
+        try:
+            updated = validate_expense(request.form)
+        except ValidationError as error:
+            # show the form again with what the user typed, so nothing is lost
+            flash(str(error), "error")
+            return render_template(
+                "expenses/edit.html", expense=expense, form=request.form,
+                categories=CATEGORIES, next_url=next_url,
+            ), 400
+        updated.id = expense_id
+        repo.update(updated)
+        flash("Expense updated.", "success")
+        return redirect(next_url)
 
-@bp.post("/update/<int:expense_id>")
-def update_expense(expense_id):
-    repo = _repo()
-    # check the id before the form, so an unknown id is always a 404
-    # and never sends the user to an edit page that doesn't exist
-    if repo.get(expense_id) is None:
-        abort(404)
-    try:
-        expense = validate_expense(request.form)
-    except ValidationError as error:
-        # back to the edit form, still remembering where to go after saving
-        flash(str(error), "error")
-        return redirect(url_for("expenses.edit_expense", expense_id=expense_id,
-                                next=request.form.get("next", "")))
-    expense.id = expense_id
-    repo.update(expense)
-    flash("Expense updated.", "success")
-    return redirect_back("expenses.index")
+    return render_template(
+        "expenses/edit.html", expense=expense, form=None,
+        categories=CATEGORIES, next_url=next_url,
+    )
 
 
 @bp.post("/add")

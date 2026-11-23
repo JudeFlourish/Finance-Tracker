@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "expenses/_fields.html" import expense_fields %}
 
 {% block title %}Expenses · Finance Tracker{% endblock %}
 
@@ -36,68 +37,14 @@
             <a class="small-link" href="{{ url_for('expenses.export_csv', start=start, end=end, category=category) }}">Export CSV (current filter)</a>
         </section>
 
-        {% if edit_expense %}
-        <section class="card">
-            <h2>Edit Expense</h2>
-            <form action="{{ url_for('expenses.update_expense', expense_id=edit_expense.id) }}" method="post">
-                <input type="hidden" name="next" value="{{ next_url }}">
-                <div class="field">
-                    <label>Description</label>
-                    <input type="text" name="description" value="{{ edit_expense.description }}" required>
-                </div>
-                <div class="row">
-                    <div class="field">
-                        <label>Amount</label>
-                        <input type="number" name="amount" step="0.01" min="0.01" value="{{ edit_expense.amount }}" required>
-                    </div>
-                    <div class="field">
-                        <label>Date</label>
-                        <input type="date" name="date" value="{{ edit_expense.date }}">
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Category</label>
-                    <select name="category">
-                        {% for c in categories %}
-                        <option value="{{ c }}" {% if c == edit_expense.category %}selected{% endif %}>{{ c }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-blue full">Save Changes</button>
-                <a href="{{ next_url }}" class="btn full" style="display:block; text-align:center; margin-top:12px;">Cancel</a>
-            </form>
-        </section>
-        {% else %}
         <section class="card">
             <h2>Add Expense</h2>
             <form action="{{ url_for('expenses.add_expense') }}" method="post">
                 <input type="hidden" name="next" value="{{ next_url }}">
-                <div class="field">
-                    <label>Description</label>
-                    <input type="text" name="description" placeholder="e.g. Lunch" required>
-                </div>
-                <div class="row">
-                    <div class="field">
-                        <label>Amount</label>
-                        <input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
-                    </div>
-                    <div class="field">
-                        <label>Date</label>
-                        <input type="date" name="date" value="{{ today }}">
-                    </div>
-                </div>
-                <div class="field">
-                    <label>Category</label>
-                    <select name="category">
-                        {% for c in categories %}
-                        <option value="{{ c }}">{{ c }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                {{ expense_fields(categories, {'date': today}) }}
                 <button type="submit" class="btn btn-blue full">Add</button>
             </form>
         </section>
-        {% endif %}
     </div>
 
     <p class="total-row">Total: <span class="pill big">${{ "%.2f"|format(total) }}</span></p>
@@ -123,10 +70,7 @@
                     <td class="right">${{ "%.2f"|format(e.amount) }}</td>
                     <td class="right">
                         <div class="row-actions">
-                            <form action="{{ url_for('expenses.edit_expense', expense_id=e.id) }}" method="get" class="inline-form">
-                                <input type="hidden" name="next" value="{{ next_url }}">
-                                <button type="submit" class="btn btn-edit">Edit</button>
-                            </form>
+                            <a href="{{ url_for('expenses.edit_expense', expense_id=e.id, next=next_url) }}" class="btn btn-edit">Edit</a>
                             <form action="{{ url_for('expenses.delete_expense', expense_id=e.id) }}" method="post" class="delete-form">
                                 <input type="hidden" name="next" value="{{ next_url }}">
                                 <button type="submit" class="btn-delete">Delete</button>
