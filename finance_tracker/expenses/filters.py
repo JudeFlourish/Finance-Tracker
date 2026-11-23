@@ -16,6 +16,8 @@ def _date_or_empty(value):
         return ""
 
 
+# frozen: a filter can't be changed after it is made, so one ExpenseFilter()
+# can safely be shared as a default value (see ExpenseRepository.list)
 @dataclass(frozen=True)
 class ExpenseFilter:
     """Which expenses to show. Filters come from the url so a view can be bookmarked."""

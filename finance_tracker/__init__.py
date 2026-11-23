@@ -21,6 +21,18 @@ def create_app(test_config=None):
     db.init_app(app)
     importer.init_app(app)
 
-    from .expenses.routes import bp
-    app.register_blueprint(bp)
+    _register_blueprints(app)
     return app
+
+
+def _register_blueprints(app):
+    # each feature is its own blueprint, adding a feature = one line here
+    from .budgets.routes import bp as budgets_bp
+    from .dashboard.routes import bp as dashboard_bp
+    from .expenses.routes import bp as expenses_bp
+    from .income.routes import bp as income_bp
+
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(expenses_bp)
+    app.register_blueprint(income_bp)
+    app.register_blueprint(budgets_bp)

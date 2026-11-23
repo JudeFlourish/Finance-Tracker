@@ -62,6 +62,8 @@ def edit_expense(expense_id):
 @bp.post("/update/<int:expense_id>")
 def update_expense(expense_id):
     repo = _repo()
+    # check the id before the form, so an unknown id is always a 404
+    # and never sends the user to an edit page that doesn't exist
     if repo.get(expense_id) is None:
         abort(404)
     try:

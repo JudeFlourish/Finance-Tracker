@@ -2,6 +2,8 @@
 from dataclasses import dataclass
 
 
+# kw_only: id has a default value, and without kw_only a subclass could not
+# add fields without defaults (like Expense.description) after it
 @dataclass(kw_only=True)
 class Entry:
     """Any amount of money on a date. Expense and Income extend this."""

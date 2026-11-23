@@ -98,7 +98,7 @@ Each test uses its own temporary database, so your real data is never touched.
 python-finance-tracker/
 ├── financeapp.py            # entry point: create_app() and run
 ├── finance_tracker/
-│   ├── __init__.py          # create_app(): config, database and routes
+│   ├── __init__.py          # create_app(): config, database, one blueprint per feature
 │   ├── config.py            # settings from environment variables
 │   ├── db.py                # SQLite connection per request, init-db command
 │   ├── schema.sql           # tables, CHECK constraints, indexes
@@ -114,6 +114,9 @@ python-finance-tracker/
 │   │   ├── repository.py    # ExpenseRepository (SQL only)
 │   │   ├── charts.py        # chart data (totals per category and per day)
 │   │   └── routes.py        # list, add, edit, delete, export
+│   ├── income/              # US-04 (Sprint 2): blueprint at /income, ready for routes
+│   ├── budgets/             # US-05 (Sprint 2): blueprint at /budgets, ready for routes
+│   ├── dashboard/           # US-04/US-05 (Sprint 2): home dashboard, reads other features
 │   ├── templates/
 │   │   └── index.html       # Dashboard (Jinja2 template)
 │   └── static/

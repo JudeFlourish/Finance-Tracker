@@ -24,6 +24,8 @@ def get_db():
 
 
 def close_db(exception=None):
+    # Flask calls this at the end of every request, also when it failed,
+    # so a connection is never left open
     conn = g.pop("db", None)
     if conn is not None:
         conn.close()

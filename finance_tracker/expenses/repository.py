@@ -1,6 +1,8 @@
 from .filters import ExpenseFilter
 from .models import Expense
 
+# named columns instead of SELECT *, so adding a column to the table
+# later doesn't change what these queries return
 _COLUMNS = "id, description, amount, date, category"
 
 
