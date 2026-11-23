@@ -21,3 +21,12 @@ CREATE TABLE IF NOT EXISTS budgets (
     category      TEXT    NOT NULL UNIQUE,
     monthly_limit REAL    NOT NULL CHECK (monthly_limit > 0)
 );
+
+-- money coming in (US-04), kept apart from expenses
+CREATE TABLE IF NOT EXISTS income (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT    NOT NULL CHECK (length(trim(source)) > 0),
+    amount REAL    NOT NULL CHECK (amount > 0),
+    date   TEXT    NOT NULL CHECK (date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]')
+);
+CREATE INDEX IF NOT EXISTS idx_income_date ON income (date);

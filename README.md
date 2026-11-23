@@ -123,7 +123,11 @@ python-finance-tracker/
 │   │   ├── repository.py    # ExpenseRepository (SQL only)
 │   │   ├── charts.py        # chart data (totals per category and per day)
 │   │   └── routes.py        # list, add, edit, delete, export
-│   ├── income/              # US-04 (Sprint 2): blueprint at /income, ready for routes
+│   ├── income/
+│   │   ├── models.py        # Income (an Entry, like Expense)
+│   │   ├── validation.py    # validate_income()
+│   │   ├── repository.py    # IncomeRepository (SQL only)
+│   │   └── routes.py        # blueprint at /income (page comes with US-04)
 │   ├── budgets/
 │   │   ├── models.py        # Budget
 │   │   ├── validation.py    # validate_budget()
@@ -151,6 +155,7 @@ python-finance-tracker/
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
 │   ├── test_importer.py     # import-json: good, bad and partly bad files
+│   ├── test_income.py       # income repository, rules and validation
 │   ├── test_performance.py  # dashboard under 2 s with 1,000 expenses
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
@@ -193,6 +198,16 @@ Each monthly budget is one row in the `budgets` table:
 | `monthly_limit` | REAL    | greater than 0                         |
 
 Budgets are not linked to expenses, so removing a budget never deletes any expense.
+
+Each income entry is one row in the `income` table, kept apart from expenses:
+
+| Column   | Type    | Rule                                   |
+|----------|---------|----------------------------------------|
+| `id`     | INTEGER | primary key, never reused              |
+| `source` | TEXT    | not blank (e.g. "Salary")              |
+| `amount` | REAL    | greater than 0                         |
+| `date`   | TEXT    | `YYYY-MM-DD`                           |
+
 New tables are created on startup, so an existing database gets them without losing data.
 
 Categories: Food, Transport, Rent, Utilities, Health, Entertainment, Education, Business, Other.
