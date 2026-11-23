@@ -28,6 +28,8 @@
     {% block content %}{% endblock %}
 </main>
 
+<!-- asks before delete / remove buttons, on every page -->
+<script src="{{ url_for('static', filename='confirm.js') }}"></script>
 {% block scripts %}{% endblock %}
 
 </body>

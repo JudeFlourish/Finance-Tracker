@@ -1,5 +1,5 @@
-// charts + small things for the page
-// chartData is created in index.html from the python data
+// charts on the expenses page
+// chartData is created in expenses/list.html from the python data
 
 // default colors so the text is visible on dark background
 Chart.defaults.color = "#cbd5e1";
@@ -45,16 +45,6 @@ if (barCanvas) {
             scales: {
                 y: { beginAtZero: true }
             }
-        }
-    });
-}
-
-// ask before deleting, I deleted wrong expense by mistake few times
-const deleteForms = document.querySelectorAll(".delete-form");
-for (let i = 0; i < deleteForms.length; i++) {
-    deleteForms[i].addEventListener("submit", function (event) {
-        if (!confirm("Delete this expense?")) {
-            event.preventDefault();
         }
     });
 }

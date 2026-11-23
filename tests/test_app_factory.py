@@ -48,9 +48,9 @@ def test_old_expense_urls_are_gone(client):
 def test_nav_shows_only_pages_that_exist(client):
     page = client.get("/expenses/").get_data(as_text=True)
     assert 'href="/expenses/"' in page
-    # income and budgets have no page yet, so no dead links
+    assert 'href="/budgets/"' in page
+    # income has no page yet, so no dead link
     assert 'href="/income' not in page
-    assert 'href="/budgets' not in page
 
 
 def test_nav_highlights_current_page(client):

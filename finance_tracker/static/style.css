@@ -283,6 +283,36 @@ td {
     padding: 30px;
 }
 
+/* a small form inside a table cell, like a budget's limit */
+.inline-form {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+}
+
+.inline-form input {
+    width: 140px;
+}
+
+/* category colour, same as in the pie chart */
+.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* label only for screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
 /* ---------- charts ---------- */
 
 /* chart.js needs a box with fixed height, otherwise canvas grows forever */
