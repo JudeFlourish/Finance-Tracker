@@ -92,6 +92,14 @@ uv run pytest
 
 Each test uses its own temporary database, so your real data is never touched.
 
+## Contributing
+
+- **One branch per card**, named `feature/<card-id>-short-name` (for example `feature/US-03-edit-expense`), created from an up-to-date `main`.
+- **Tests must pass before merge.** Run `uv run pytest` before opening a pull request. No pull request is merged into `main` while a test is failing.
+- **Add tests with every change**, one test file per feature (`tests/test_<feature>.py`).
+- **Every pull request is reviewed** and approved by another team member before it is merged.
+- **Follow the structure:** code is grouped by feature (`expenses/`, `income/`, `budgets/`, `dashboard/`); routes handle HTTP only, rules go in `validation.py` and SQL in `repository.py`; features don't import each other, except the dashboard reading repositories.
+
 ## Project Structure
 
 ```
@@ -129,6 +137,7 @@ python-finance-tracker/
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
 │   ├── test_importer.py     # import-json: good, bad and partly bad files
+│   ├── test_performance.py  # dashboard under 2 s with 1,000 expenses
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
 └── uv.lock                  # pinned versions
@@ -170,6 +179,7 @@ Categories: Food, Transport, Rent, Utilities, Health, Entertainment, Education, 
 - **Layers.** Routes only handle HTTP; validation and SQL live in their own modules (`validation.py`, `repository.py`).
 - **Safe output and queries.** Jinja2 escapes user input when rendering, chart data is passed to JavaScript with `tojson`, and SQL always uses `?` parameters.
 - **Charts are prepared in Python.** Totals per category and per day are calculated on the backend; JavaScript only draws them.
+- **Fast with real amounts of data.** With 1,000 expenses the dashboard is served in about 20 ms (the target is under 2 seconds). Filtering by date uses an index; `tests/test_performance.py` checks the target on every test run.
 
 ## Known Limitations
 
