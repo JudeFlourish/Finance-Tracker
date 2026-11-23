@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_forms.html" import income_fields %}
 
 {% block title %}Income · Finance Tracker{% endblock %}
 
@@ -11,20 +12,7 @@
             <h2>Add Income</h2>
             <form action="{{ url_for('income.add_income') }}" method="post">
                 <input type="hidden" name="next" value="{{ next_url }}">
-                <div class="field">
-                    <label for="source">Source</label>
-                    <input type="text" id="source" name="source" placeholder="e.g. Salary" required>
-                </div>
-                <div class="row">
-                    <div class="field">
-                        <label for="amount">Amount</label>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
-                    </div>
-                    <div class="field">
-                        <label for="date">Date</label>
-                        <input type="date" id="date" name="date" value="{{ today }}">
-                    </div>
-                </div>
+                {{ income_fields({'date': today}) }}
                 <button type="submit" class="btn btn-blue full">Add</button>
             </form>
         </section>

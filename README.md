@@ -7,6 +7,7 @@ The goal of this project was to learn server-side web development: routing, hand
 ## Features
 
 - **Add, edit and delete expenses** with a description, amount, date and category
+- **Home dashboard:** pick a month and see its income, spending and balance (income − spending), quick-add an expense or income, recent activity and charts
 - **Income:** record money coming in (source, amount, date), see the total, delete entries; kept apart from expenses
 - **Monthly budgets:** set, change or remove a spending limit for any category
 - **Filter** by start date, end date and category
@@ -115,14 +116,14 @@ python-finance-tracker/
 │   ├── categories.py        # category list and chart colours
 │   ├── models.py            # Entry base class (shared by expenses and income)
 │   ├── validation.py        # ValidationError + shared field parsers
-│   ├── web.py               # redirect_back() and the nav bar links
+│   ├── web.py               # redirect_back(), nav bar links, 404 page
+│   ├── charts.py            # chart data (totals per category and per day), expenses only
 │   ├── importer.py          # flask import-json command (old expenses.json)
 │   ├── expenses/
 │   │   ├── models.py        # Expense
 │   │   ├── filters.py       # ExpenseFilter (date range and category from the url)
 │   │   ├── validation.py    # validate_expense()
 │   │   ├── repository.py    # ExpenseRepository (SQL only)
-│   │   ├── charts.py        # chart data (totals per category and per day)
 │   │   └── routes.py        # list, add, edit, delete, export
 │   ├── income/
 │   │   ├── models.py        # Income (an Entry, like Expense)
@@ -134,12 +135,16 @@ python-finance-tracker/
 │   │   ├── validation.py    # validate_budget()
 │   │   ├── repository.py    # BudgetRepository (SQL only, one budget per category)
 │   │   └── routes.py        # budgets page: set, change, remove
-│   ├── dashboard/           # US-04/US-05 (Sprint 2): home dashboard, reads other features
+│   ├── dashboard/
+│   │   ├── stats.py         # Month, parse_month(), recent_transactions() (plain functions)
+│   │   └── routes.py        # home page; only reads the other features' repositories
 │   ├── templates/
 │   │   ├── base.html        # shared layout: nav bar, flash messages
 │   │   ├── 404.html         # page not found, in the app's layout
+│   │   ├── _forms.html      # expense and income form fields, shared by every form
+│   │   ├── dashboard/
+│   │   │   └── home.html    # month totals, balance, quick add, recent activity, charts
 │   │   ├── expenses/
-│   │   │   ├── _fields.html # the expense form fields, shared by add and edit
 │   │   │   ├── list.html    # expenses page (filters, add form, list, charts)
 │   │   │   └── edit.html    # edit one expense
 │   │   ├── income/
@@ -148,18 +153,19 @@ python-finance-tracker/
 │   │       └── list.html    # one row per category: set, change or remove its budget
 │   └── static/
 │       ├── style.css        # Layout and dark theme
-│       ├── script.js        # chart rendering (expenses page)
+│       ├── script.js        # chart rendering (expenses page and dashboard)
 │       └── confirm.js       # asks before delete / remove (every page)
 ├── tests/
 │   ├── conftest.py          # app, client and conn fixtures (temporary database)
 │   ├── test_app_factory.py
 │   ├── test_budgets.py      # budgets page, repository, rules and validation
+│   ├── test_dashboard.py    # months, balance, recent activity, quick add
 │   ├── test_db.py           # schema, constraints, connection handling
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
 │   ├── test_importer.py     # import-json: good, bad and partly bad files
 │   ├── test_income.py       # income page, repository, rules and validation
-│   ├── test_performance.py  # dashboard under 2 s with 1,000 expenses
+│   ├── test_performance.py  # expenses page and dashboard under 2 s with 1,000 expenses
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
 └── uv.lock                  # pinned versions
@@ -169,7 +175,7 @@ python-finance-tracker/
 
 | Method | Route                   | Description                                                        |
 |--------|-------------------------|--------------------------------------------------------------------|
-| GET    | `/`                     | Home. Goes to `/expenses/` until the dashboard is built            |
+| GET    | `/`                     | Home dashboard for a month. Optional query param: `month=YYYY-MM`  |
 | GET    | `/expenses/`            | Expenses page. Optional query params: `start`, `end`, `category`   |
 | POST   | `/expenses/add`         | Validates the form and creates an expense                          |
 | GET    | `/expenses/<id>/edit`   | Edit page, filled in with the expense's current values             |
@@ -229,7 +235,7 @@ Categories: Food, Transport, Rent, Utilities, Health, Entertainment, Education, 
 - **Layers.** Routes only handle HTTP; validation and SQL live in their own modules (`validation.py`, `repository.py`).
 - **Safe output and queries.** Jinja2 escapes user input when rendering, chart data is passed to JavaScript with `tojson`, and SQL always uses `?` parameters.
 - **Charts are prepared in Python.** Totals per category and per day are calculated on the backend; JavaScript only draws them.
-- **Fast with real amounts of data.** With 1,000 expenses the dashboard is served in about 20 ms (the target is under 2 seconds). Filtering by date uses an index; `tests/test_performance.py` checks the target on every test run.
+- **Fast with real amounts of data.** With 1,000 expenses the dashboard and the expenses page are each served in well under 0.1 seconds (the target is under 2 seconds). Filtering by date uses an index; `tests/test_performance.py` checks the target on every test run.
 
 ## Known Limitations
 

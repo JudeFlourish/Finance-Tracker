@@ -1,5 +1,5 @@
-// charts on the expenses page
-// chartData is created in expenses/list.html from the python data
+// charts on the expenses page and the dashboard
+// chartData is created in the page template from the python data
 
 // default colors so the text is visible on dark background
 Chart.defaults.color = "#cbd5e1";

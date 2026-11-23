@@ -90,10 +90,58 @@ h2 {
     gap: 20px;
 }
 
+/* two cards side by side, same width (dashboard quick add) */
+.top.even {
+    grid-template-columns: 1fr 1fr;
+}
+
 .charts {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+}
+
+/* ---------- dashboard ---------- */
+
+.month-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.month-nav h1 {
+    margin: 0;
+    min-width: 220px;
+    text-align: center;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.stat h2 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    color: #94a3b8;
+}
+
+.stat-value {
+    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* money in, and a balance below zero */
+.income {
+    color: #4ade80;
+}
+
+.negative {
+    color: #f87171;
 }
 
 /* ---------- forms ---------- */
@@ -324,6 +372,8 @@ td {
 /* phone / small screen */
 @media (max-width: 800px) {
     .top,
+    .top.even,
+    .stats,
     .charts {
         grid-template-columns: 1fr;
     }

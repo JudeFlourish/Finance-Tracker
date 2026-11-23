@@ -3,8 +3,9 @@ from flask import current_app, redirect, render_template, request, url_for
 
 # the links in the nav bar, as (label, endpoint)
 # a link only shows once its route exists, so a new page appears in the
-# nav as soon as its route is added (income and budgets come in Sprint 2)
+# nav as soon as its route is added
 NAV_LINKS = [
+    ("Home", "dashboard.home"),
     ("Expenses", "expenses.index"),
     ("Income", "income.list_income"),
     ("Budgets", "budgets.list_budgets"),
