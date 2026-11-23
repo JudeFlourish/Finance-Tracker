@@ -7,6 +7,7 @@ The goal of this project was to learn server-side web development: routing, hand
 ## Features
 
 - **Add, edit and delete expenses** with a description, amount, date and category
+- **Monthly budgets:** set, change or remove a spending limit for any category
 - **Filter** by start date, end date and category
 - **Running total** for the current filter
 - **Charts:** spending by category (pie) and spending over time (bar)
@@ -127,22 +128,25 @@ python-finance-tracker/
 │   │   ├── models.py        # Budget
 │   │   ├── validation.py    # validate_budget()
 │   │   ├── repository.py    # BudgetRepository (SQL only, one budget per category)
-│   │   └── routes.py        # blueprint at /budgets (page comes with US-05)
+│   │   └── routes.py        # budgets page: set, change, remove
 │   ├── dashboard/           # US-04/US-05 (Sprint 2): home dashboard, reads other features
 │   ├── templates/
 │   │   ├── base.html        # shared layout: nav bar, flash messages
 │   │   ├── 404.html         # page not found, in the app's layout
-│   │   └── expenses/
-│   │       ├── _fields.html # the expense form fields, shared by add and edit
-│   │       ├── list.html    # expenses page (filters, add form, list, charts)
-│   │       └── edit.html    # edit one expense
+│   │   ├── expenses/
+│   │   │   ├── _fields.html # the expense form fields, shared by add and edit
+│   │   │   ├── list.html    # expenses page (filters, add form, list, charts)
+│   │   │   └── edit.html    # edit one expense
+│   │   └── budgets/
+│   │       └── list.html    # one row per category: set, change or remove its budget
 │   └── static/
 │       ├── style.css        # Layout and dark theme
-│       └── script.js        # Chart rendering and delete confirmation
+│       ├── script.js        # chart rendering (expenses page)
+│       └── confirm.js       # asks before delete / remove (every page)
 ├── tests/
 │   ├── conftest.py          # app, client and conn fixtures (temporary database)
 │   ├── test_app_factory.py
-│   ├── test_budgets.py      # budget repository, rules and validation
+│   ├── test_budgets.py      # budgets page, repository, rules and validation
 │   ├── test_db.py           # schema, constraints, connection handling
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
@@ -164,6 +168,9 @@ python-finance-tracker/
 | POST   | `/expenses/<id>/edit`   | Validates and saves; on an error shows the form again as typed     |
 | POST   | `/expenses/delete/<id>` | Deletes an expense by id                                           |
 | GET    | `/expenses/export`      | Downloads filtered expenses as CSV (same query params as the page) |
+| GET    | `/budgets/`             | Budgets page: every category with its monthly limit                |
+| POST   | `/budgets/`             | Sets a category's budget, or changes it if it already has one      |
+| POST   | `/budgets/<id>/delete`  | Removes a budget (its category's expenses are kept)                |
 
 ## Data Model
 
