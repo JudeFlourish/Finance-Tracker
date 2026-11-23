@@ -34,3 +34,7 @@ def test_test_config_overrides_defaults(app, tmp_path):
 def test_home_page_with_no_data(client):
     response = client.get("/")
     assert response.status_code == 200
+
+
+def test_every_feature_is_registered(app):
+    assert {"expenses", "income", "budgets", "dashboard"} <= set(app.blueprints)
