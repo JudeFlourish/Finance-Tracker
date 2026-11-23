@@ -123,7 +123,11 @@ python-finance-tracker/
 │   │   ├── charts.py        # chart data (totals per category and per day)
 │   │   └── routes.py        # list, add, edit, delete, export
 │   ├── income/              # US-04 (Sprint 2): blueprint at /income, ready for routes
-│   ├── budgets/             # US-05 (Sprint 2): blueprint at /budgets, ready for routes
+│   ├── budgets/
+│   │   ├── models.py        # Budget
+│   │   ├── validation.py    # validate_budget()
+│   │   ├── repository.py    # BudgetRepository (SQL only, one budget per category)
+│   │   └── routes.py        # blueprint at /budgets (page comes with US-05)
 │   ├── dashboard/           # US-04/US-05 (Sprint 2): home dashboard, reads other features
 │   ├── templates/
 │   │   ├── base.html        # shared layout: nav bar, flash messages
@@ -138,6 +142,7 @@ python-finance-tracker/
 ├── tests/
 │   ├── conftest.py          # app, client and conn fixtures (temporary database)
 │   ├── test_app_factory.py
+│   ├── test_budgets.py      # budget repository, rules and validation
 │   ├── test_db.py           # schema, constraints, connection handling
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
@@ -171,6 +176,17 @@ Each expense is one row in the `expenses` table (see `finance_tracker/schema.sql
 | `amount`      | REAL    | greater than 0                         |
 | `date`        | TEXT    | `YYYY-MM-DD`                           |
 | `category`    | TEXT    | one of the categories below            |
+
+Each monthly budget is one row in the `budgets` table:
+
+| Column          | Type    | Rule                                   |
+|-----------------|---------|----------------------------------------|
+| `id`            | INTEGER | primary key, never reused              |
+| `category`      | TEXT    | one of the categories below, unique (one budget per category) |
+| `monthly_limit` | REAL    | greater than 0                         |
+
+Budgets are not linked to expenses, so removing a budget never deletes any expense.
+New tables are created on startup, so an existing database gets them without losing data.
 
 Categories: Food, Transport, Rent, Utilities, Health, Entertainment, Education, Business, Other.
 

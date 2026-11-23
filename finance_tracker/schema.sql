@@ -13,3 +13,11 @@ CREATE TABLE IF NOT EXISTS expenses (
 
 -- filtering and sorting by date is the most common query
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses (date);
+
+-- one monthly spending limit per category (US-05)
+-- no link to expenses: removing a budget never touches any expense
+CREATE TABLE IF NOT EXISTS budgets (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    category      TEXT    NOT NULL UNIQUE,
+    monthly_limit REAL    NOT NULL CHECK (monthly_limit > 0)
+);

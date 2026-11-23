@@ -68,6 +68,21 @@ def test_parse_category_unknown_becomes_other(value):
     assert parse_category(value) == "Other"
 
 
+def test_parse_category_strict_keeps_known_category():
+    assert parse_category("Food", strict=True) == "Food"
+
+
+@pytest.mark.parametrize("value", ["Pizza", "", None, "food"])
+def test_parse_category_strict_refuses_unknown(value):
+    with pytest.raises(ValidationError, match="Please choose a category"):
+        parse_category(value, strict=True)
+
+
+def test_parse_amount_uses_field_name():
+    with pytest.raises(ValidationError, match="Budget must be a number"):
+        parse_amount("abc", field="Budget")
+
+
 # models
 
 def test_total_adds_up_entries():
