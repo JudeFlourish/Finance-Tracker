@@ -21,14 +21,14 @@ def parse_text(value, message):
     return value.strip()
 
 
-def parse_amount(value):
+def parse_amount(value, field="Amount"):
     # float(True) is 1.0, so a true/false value would pass as an amount
     if isinstance(value, bool):
-        raise ValidationError("Amount must be a number")
+        raise ValidationError(f"{field} must be a number")
     try:
         amount = float(value)
     except (TypeError, ValueError):
-        raise ValidationError("Amount must be a number")
+        raise ValidationError(f"{field} must be a number")
     # float() also accepts "nan" and "inf", which are not real amounts
     if not math.isfinite(amount) or amount <= 0:
         raise ValidationError("Please enter a positive number")
@@ -55,6 +55,14 @@ def parse_date(value):
     return value
 
 
-def parse_category(value):
-    # unknown categories are saved as "Other", same as before
-    return value if value in CATEGORIES else DEFAULT_CATEGORY
+def parse_category(value, strict=False):
+    """Return a known category.
+
+    An unknown one becomes "Other" (expenses, same as before), or with
+    strict=True is refused (budgets: a budget needs a real category).
+    """
+    if value in CATEGORIES:
+        return value
+    if strict:
+        raise ValidationError("Please choose a category")
+    return DEFAULT_CATEGORY
