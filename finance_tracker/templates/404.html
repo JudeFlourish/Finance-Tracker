@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Not found · Finance Tracker{% endblock %}
+
+{% block content %}
+    <h1>Page not found</h1>
+    <p class="subtitle">This page doesn't exist, or the item was already deleted.</p>
+    <a href="{{ url_for('expenses.index') }}" class="btn">Back to expenses</a>
+{% endblock %}

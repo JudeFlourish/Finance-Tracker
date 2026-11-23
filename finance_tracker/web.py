@@ -1,5 +1,5 @@
 """Small helpers shared by the route modules."""
-from flask import current_app, redirect, request, url_for
+from flask import current_app, redirect, render_template, request, url_for
 
 # the links in the nav bar, as (label, endpoint)
 # a link only shows once its route exists, so a new page appears in the
@@ -21,6 +21,11 @@ def init_app(app):
     @app.context_processor
     def add_nav_links():
         return {"nav_links": nav_links()}
+
+    # unknown pages and ids get a page in the app's own layout
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("404.html"), 404
 
 
 def is_safe_path(target):

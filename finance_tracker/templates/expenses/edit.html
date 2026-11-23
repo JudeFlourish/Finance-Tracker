@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "expenses/_fields.html" import expense_fields %}
+
+{% block title %}Edit Expense · Finance Tracker{% endblock %}
+
+{% block content %}
+    {# after a failed save show what the user typed, otherwise the saved values #}
+    {% set values = form if form else {
+        'description': expense.description,
+        'amount': '%.2f'|format(expense.amount),
+        'date': expense.date,
+        'category': expense.category,
+    } %}
+
+    <h1>Edit Expense</h1>
+    <p class="subtitle">Change the details and save. The same rules as adding apply.</p>
+
+    <section class="card narrow">
+        <form action="{{ url_for('expenses.edit_expense', expense_id=expense.id) }}" method="post">
+            <input type="hidden" name="next" value="{{ next_url }}">
+            {{ expense_fields(categories, values) }}
+            <div class="row">
+                <a href="{{ next_url }}" class="btn">Cancel</a>
+                <button type="submit" class="btn btn-blue grow">Save changes</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}
