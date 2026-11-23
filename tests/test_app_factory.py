@@ -1,6 +1,8 @@
 import os
 
-from finance_tracker import config, create_app
+import pytest
+
+from finance_tracker import config, create_app, web
 from finance_tracker.web import nav_links
 
 
@@ -45,25 +47,30 @@ def test_old_expense_urls_are_gone(client):
     assert client.post("/add").status_code == 404
 
 
-def test_nav_shows_only_pages_that_exist(client):
+def test_nav_links_every_page(client):
     page = client.get("/expenses/").get_data(as_text=True)
-    assert 'href="/expenses/"' in page
-    assert 'href="/budgets/"' in page
-    # income has no page yet, so no dead link
-    assert 'href="/income' not in page
+    for url in ["/expenses/", "/income/", "/budgets/"]:
+        assert f'href="{url}"' in page
 
 
-def test_nav_highlights_current_page(client):
-    page = client.get("/expenses/").get_data(as_text=True)
-    assert 'class="nav-link active">Expenses</a>' in page
+@pytest.mark.parametrize("url, label", [
+    ("/expenses/", "Expenses"),
+    ("/income/", "Income"),
+    ("/budgets/", "Budgets"),
+])
+def test_nav_highlights_current_page(client, url, label):
+    page = client.get(url).get_data(as_text=True)
+    assert f'class="nav-link active">{label}</a>' in page
+    assert page.count("nav-link active") == 1
 
 
-def test_nav_link_appears_when_page_is_added(app):
-    # adding a route with the endpoint name from NAV_LINKS is enough
+def test_nav_hides_link_until_page_exists(app, monkeypatch):
+    # a planned page with no route yet gets no link, so there are never dead links
+    monkeypatch.setattr(web, "NAV_LINKS", web.NAV_LINKS + [("Reports", "reports.index")])
     with app.app_context():
-        assert ("Income", "income.list_income") not in nav_links()
-        app.view_functions["income.list_income"] = lambda: "income"
-        assert ("Income", "income.list_income") in nav_links()
+        assert ("Reports", "reports.index") not in nav_links()
+        app.view_functions["reports.index"] = lambda: "reports"
+        assert ("Reports", "reports.index") in nav_links()
 
 
 def test_every_feature_is_registered(app):

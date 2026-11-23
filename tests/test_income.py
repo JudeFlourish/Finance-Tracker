@@ -150,3 +150,95 @@ def test_validate_income():
 def test_validate_income_rejects_bad_forms(form, message):
     with pytest.raises(ValidationError, match=message):
         validate_income(form)
+
+
+# /income page
+
+def messages(client):
+    # what the next page will show as flash messages
+    with client.session_transaction() as session:
+        return [message for _, message in session.get("_flashes", [])]
+
+
+@pytest.fixture
+def add_income(client):
+    """Post the add-income form; any field can be overridden."""
+    def _add(**fields):
+        form = {"source": "Salary", "amount": "1500", "date": "2026-11-01"}
+        form.update(fields)
+        return client.post("/income/", data=form)
+    return _add
+
+
+def test_page_empty(client):
+    response = client.get("/income/")
+    page = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "<h1>Income</h1>" in page
+    assert "No income yet" in page
+    assert "$0.00" in page
+
+
+def test_page_lists_income_newest_first_with_total(client, sample):
+    page = client.get("/income/").get_data(as_text=True)
+    assert page.index("2026-11-28") < page.index("2026-11-03") < page.index("2026-10-28")
+    assert "<td>Freelance</td>" in page
+    assert "$3200.00" in page
+
+
+def test_add_income(client, repo, add_income):
+    response = add_income(source=" Salary ", amount="1500", date="2026-11-01")
+    assert response.status_code == 302
+    assert response.location == "/income/"
+    assert messages(client) == ["Income added."]
+    [saved] = repo.list()
+    assert saved == Income(id=saved.id, source="Salary", amount=1500.0, date="2026-11-01")
+
+
+@pytest.mark.parametrize("fields, message", [
+    ({"source": "  "}, "Please write where the income came from"),
+    ({"amount": "abc"}, "Amount must be a number"),
+    ({"amount": "-5"}, "Please enter a positive number"),
+    ({"date": "2026-02-30"}, "Please enter a valid date"),
+])
+def test_add_rejects_invalid_input(client, repo, add_income, fields, message):
+    response = add_income(**fields)
+    assert response.status_code == 302
+    assert messages(client) == [message]
+    assert repo.list() == []
+
+
+def test_add_goes_back_to_next_page(add_income):
+    # the dashboard's quick add will send next="/"
+    assert add_income(next="/").location == "/"
+    assert add_income(next="//evil.com").location == "/income/"
+
+
+def test_delete_income(client, repo, add_income):
+    add_income()
+    [saved] = repo.list()
+    response = client.post(f"/income/{saved.id}/delete")
+    assert response.status_code == 302
+    assert messages(client)[-1] == "Income deleted."
+    assert repo.list() == []
+
+
+def test_delete_unknown_income_returns_404(client):
+    response = client.post("/income/99/delete")
+    assert response.status_code == 404
+    assert "Page not found" in response.get_data(as_text=True)
+
+
+def test_delete_asks_first(client, add_income):
+    add_income()
+    page = client.get("/income/").get_data(as_text=True)
+    assert 'data-confirm="Delete this income?"' in page
+
+
+def test_income_not_counted_on_expenses_page(client, add_income, add_expense):
+    add_income(source="Salary", amount="1500")
+    add_expense(description="Lunch", amount="12.50", category="Food")
+    page = client.get("/expenses/").get_data(as_text=True)
+    assert "Salary" not in page
+    assert "$12.50" in page
+    assert "1500" not in page  # not in the list, total or chart data
