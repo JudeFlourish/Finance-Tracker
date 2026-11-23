@@ -1,12 +1,13 @@
 # Finance Tracker
 
-A web-based expense tracker built with **Python and Flask**. Users can log expenses, filter them by date range and category, see spending in charts, and export the filtered data to CSV.
+A web-based finance tracker built with **Python and Flask**. Users can log expenses and income and set a monthly budget per category. Expenses can be filtered by date range and category, shown in charts, and exported to CSV.
 
 The goal of this project was to learn server-side web development: routing, handling forms, rendering templates, saving data, and validating input.
 
 ## Features
 
 - **Add, edit and delete expenses** with a description, amount, date and category
+- **Income:** record money coming in (source, amount, date), see the total, delete entries; kept apart from expenses
 - **Monthly budgets:** set, change or remove a spending limit for any category
 - **Filter** by start date, end date and category
 - **Running total** for the current filter
@@ -127,7 +128,7 @@ python-finance-tracker/
 │   │   ├── models.py        # Income (an Entry, like Expense)
 │   │   ├── validation.py    # validate_income()
 │   │   ├── repository.py    # IncomeRepository (SQL only)
-│   │   └── routes.py        # blueprint at /income (page comes with US-04)
+│   │   └── routes.py        # income page: list, total, add, delete
 │   ├── budgets/
 │   │   ├── models.py        # Budget
 │   │   ├── validation.py    # validate_budget()
@@ -141,6 +142,8 @@ python-finance-tracker/
 │   │   │   ├── _fields.html # the expense form fields, shared by add and edit
 │   │   │   ├── list.html    # expenses page (filters, add form, list, charts)
 │   │   │   └── edit.html    # edit one expense
+│   │   ├── income/
+│   │   │   └── list.html    # add form, income list and total
 │   │   └── budgets/
 │   │       └── list.html    # one row per category: set, change or remove its budget
 │   └── static/
@@ -155,7 +158,7 @@ python-finance-tracker/
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
 │   ├── test_importer.py     # import-json: good, bad and partly bad files
-│   ├── test_income.py       # income repository, rules and validation
+│   ├── test_income.py       # income page, repository, rules and validation
 │   ├── test_performance.py  # dashboard under 2 s with 1,000 expenses
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── pyproject.toml           # dependencies
@@ -173,6 +176,9 @@ python-finance-tracker/
 | POST   | `/expenses/<id>/edit`   | Validates and saves; on an error shows the form again as typed     |
 | POST   | `/expenses/delete/<id>` | Deletes an expense by id                                           |
 | GET    | `/expenses/export`      | Downloads filtered expenses as CSV (same query params as the page) |
+| GET    | `/income/`              | Income page: add form, income list (newest first) and total        |
+| POST   | `/income/`              | Validates the form and adds income                                 |
+| POST   | `/income/<id>/delete`   | Deletes an income entry                                            |
 | GET    | `/budgets/`             | Budgets page: every category with its monthly limit                |
 | POST   | `/budgets/`             | Sets a category's budget, or changes it if it already has one      |
 | POST   | `/budgets/<id>/delete`  | Removes a budget (its category's expenses are kept)                |
