@@ -2,7 +2,7 @@
 
 Plain function, no Flask or database, so it can be tested on its own.
 """
-from ..categories import CATEGORIES, COLORS
+from .categories import CATEGORIES, COLORS
 
 
 def chart_data(expenses):

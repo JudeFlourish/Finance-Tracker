@@ -34,12 +34,10 @@ def test_test_config_overrides_defaults(app, tmp_path):
     assert app.config["DATABASE"] == str(tmp_path / "test.db")
 
 
-def test_home_page_goes_to_expenses(client):
-    # until the dashboard is built, "/" shows the expenses page
+def test_home_page_is_the_dashboard(client):
     response = client.get("/")
-    assert response.status_code == 302
-    assert response.location == "/expenses/"
-    assert client.get("/", follow_redirects=True).status_code == 200
+    assert response.status_code == 200
+    assert "Quick add" in response.get_data(as_text=True)
 
 
 def test_old_expense_urls_are_gone(client):
@@ -49,11 +47,12 @@ def test_old_expense_urls_are_gone(client):
 
 def test_nav_links_every_page(client):
     page = client.get("/expenses/").get_data(as_text=True)
-    for url in ["/expenses/", "/income/", "/budgets/"]:
+    for url in ["/", "/expenses/", "/income/", "/budgets/"]:
         assert f'href="{url}"' in page
 
 
 @pytest.mark.parametrize("url, label", [
+    ("/", "Home"),
     ("/expenses/", "Expenses"),
     ("/income/", "Income"),
     ("/budgets/", "Budgets"),

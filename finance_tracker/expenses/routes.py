@@ -10,7 +10,7 @@ from ..db import get_db
 from ..models import total
 from ..validation import ValidationError
 from ..web import is_safe_path, redirect_back
-from .charts import chart_data
+from ..charts import chart_data
 from .filters import ExpenseFilter
 from .repository import ExpenseRepository
 from .validation import validate_expense

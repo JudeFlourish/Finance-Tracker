@@ -1,15 +1,48 @@
-"""HTTP layer for the home dashboard (US-04, US-05).
+"""Home dashboard: one month at a glance (US-04, US-05).
 
-The dashboard only reads data through the other features' repositories,
-it never writes SQL itself. Sums and progress go in a stats.py next to
-this file, as plain functions that are easy to test.
+Only reads, through the other features' repositories. It never writes SQL;
+the quick-add forms post to the expenses and income pages, which send the
+user back here with the hidden "next" field.
 """
-from flask import Blueprint, redirect, url_for
+from datetime import date
+
+from flask import Blueprint, render_template, request
+
+from ..categories import CATEGORIES
+from ..charts import chart_data
+from ..db import get_db
+from ..expenses.filters import ExpenseFilter
+from ..expenses.repository import ExpenseRepository
+from ..income.repository import IncomeRepository
+from ..models import total
+from . import stats
 
 bp = Blueprint("dashboard", __name__)
 
 
 @bp.get("/")
 def home():
-    # until the dashboard page is built, the home page shows the expenses
-    return redirect(url_for("expenses.index"))
+    today = date.today()
+    month = stats.parse_month(request.args.get("month"), today)
+
+    conn = get_db()
+    expenses = ExpenseRepository(conn).list(ExpenseFilter(start=month.start, end=month.end))
+    income = IncomeRepository(conn).list(start=month.start, end=month.end)
+
+    spent = total(expenses)
+    earned = total(income)
+    return render_template(
+        "dashboard/home.html",
+        month=month,
+        is_current_month=month.contains(today.isoformat()),
+        earned=earned,
+        spent=spent,
+        balance=earned - spent,
+        recent=stats.recent_transactions(expenses, income),
+        chart_data=chart_data(expenses),
+        has_expenses=bool(expenses),
+        categories=CATEGORIES,
+        # quick add uses today, or the 1st when looking at another month
+        default_date=today.isoformat() if month.contains(today.isoformat()) else month.start,
+        next_url=request.full_path.rstrip("?"),
+    )

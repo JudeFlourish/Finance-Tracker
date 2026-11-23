@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "_forms.html" import expense_fields, income_fields %}
+
+{% block title %}Home · Finance Tracker{% endblock %}
+
+{% block content %}
+    <!-- previous / next month, the month is in the url so it can be bookmarked -->
+    <div class="month-nav">
+        <a href="{{ url_for('dashboard.home', month=month.previous().param) }}" class="btn">&larr; Previous</a>
+        <h1>{{ month.label }}</h1>
+        <a href="{{ url_for('dashboard.home', month=month.next().param) }}" class="btn">Next &rarr;</a>
+        {% if not is_current_month %}
+        <a href="{{ url_for('dashboard.home') }}" class="small-link">Back to this month</a>
+        {% endif %}
+    </div>
+
+    <div class="stats">
+        <section class="card stat">
+            <h2>Income</h2>
+            <p class="stat-value income">${{ "%.2f"|format(earned) }}</p>
+        </section>
+        <section class="card stat">
+            <h2>Spending</h2>
+            <p class="stat-value">${{ "%.2f"|format(spent) }}</p>
+        </section>
+        <section class="card stat">
+            <h2>Balance</h2>
+            <!-- balance = income - spending, red when more was spent than earned -->
+            <p class="stat-value {{ 'negative' if balance < 0 else 'income' }}">
+                {{ "-" if balance < 0 }}${{ "%.2f"|format(balance|abs) }}
+            </p>
+        </section>
+    </div>
+
+    <div class="top even">
+        <section class="card">
+            <h2>Quick add: expense</h2>
+            <form action="{{ url_for('expenses.add_expense') }}" method="post">
+                <input type="hidden" name="next" value="{{ next_url }}">
+                {{ expense_fields(categories, {'date': default_date}, prefix='expense-') }}
+                <button type="submit" class="btn btn-blue full">Add expense</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Quick add: income</h2>
+            <form action="{{ url_for('income.add_income') }}" method="post">
+                <input type="hidden" name="next" value="{{ next_url }}">
+                {{ income_fields({'date': default_date}, prefix='income-') }}
+                <button type="submit" class="btn btn-blue full">Add income</button>
+            </form>
+        </section>
+    </div>
+
+    <section class="card">
+        <h2>Recent activity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>What</th>
+                    <th>Category</th>
+                    <th class="right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in recent %}
+                <tr>
+                    <td>{{ t.date }}</td>
+                    <td>{{ t.label }}</td>
+                    <td>{{ t.detail }}</td>
+                    <!-- income adds money (+), an expense takes it away (-) -->
+                    <td class="right {{ 'income' if t.kind == 'income' }}">
+                        {{ "+" if t.kind == "income" else "-" }}${{ "%.2f"|format(t.amount) }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="empty">Nothing in {{ month.label }} yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <div class="charts">
+        <section class="card">
+            <h2>Spending by category</h2>
+            {% if has_expenses %}
+            <div class="chart-box"><canvas id="pieChart"></canvas></div>
+            {% else %}
+            <p class="empty">No spending this month</p>
+            {% endif %}
+        </section>
+
+        <section class="card">
+            <h2>Spending over time</h2>
+            {% if has_expenses %}
+            <div class="chart-box"><canvas id="barChart"></canvas></div>
+            {% else %}
+            <p class="empty">No spending this month</p>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js library for the charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    // data comes from charts.py, python dict -> javascript object (expenses only, never income)
+    const chartData = {{ chart_data|tojson }};
+</script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

@@ -1,6 +1,6 @@
 import pytest
 
-from finance_tracker.expenses.charts import chart_data
+from finance_tracker.charts import chart_data
 from finance_tracker.expenses.models import Expense
 from finance_tracker.expenses.repository import ExpenseRepository
 

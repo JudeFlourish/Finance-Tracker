@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "expenses/_fields.html" import expense_fields %}
+{% from "_forms.html" import expense_fields %}
 
 {% block title %}Expenses · Finance Tracker{% endblock %}
 
@@ -113,7 +113,7 @@
 <!-- Chart.js library for the charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-    // data comes from expenses/charts.py, python dict -> javascript object
+    // data comes from charts.py, python dict -> javascript object
     const chartData = {{ chart_data|tojson }};
 </script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
