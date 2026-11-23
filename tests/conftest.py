@@ -30,5 +30,5 @@ def add_expense(client):
     def _add(**fields):
         form = {"description": "Lunch", "amount": "12.50", "date": "2026-11-05", "category": "Food"}
         form.update(fields)
-        return client.post("/add", data=form)
+        return client.post("/expenses/add", data=form)
     return _add

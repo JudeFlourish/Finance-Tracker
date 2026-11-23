@@ -113,7 +113,7 @@ python-finance-tracker/
 │   ├── categories.py        # category list and chart colours
 │   ├── models.py            # Entry base class (shared by expenses and income)
 │   ├── validation.py        # ValidationError + shared field parsers
-│   ├── web.py               # redirect_back(): safe return to the previous page
+│   ├── web.py               # redirect_back() and the nav bar links
 │   ├── importer.py          # flask import-json command (old expenses.json)
 │   ├── expenses/
 │   │   ├── models.py        # Expense
@@ -126,7 +126,9 @@ python-finance-tracker/
 │   ├── budgets/             # US-05 (Sprint 2): blueprint at /budgets, ready for routes
 │   ├── dashboard/           # US-04/US-05 (Sprint 2): home dashboard, reads other features
 │   ├── templates/
-│   │   └── index.html       # Dashboard (Jinja2 template)
+│   │   ├── base.html        # shared layout: nav bar, flash messages
+│   │   └── expenses/
+│   │       └── list.html    # expenses page (filters, form, list, charts)
 │   └── static/
 │       ├── style.css        # Layout and dark theme
 │       └── script.js        # Chart rendering and delete confirmation
@@ -145,14 +147,15 @@ python-finance-tracker/
 
 ## Routes
 
-| Method | Route          | Description                                                      |
-|--------|----------------|------------------------------------------------------------------|
-| GET    | `/`            | Dashboard. Optional query params: `start`, `end`, `category`     |
-| POST   | `/add`         | Validates the form and creates an expense                        |
-| GET    | `/edit/<id>`   | Dashboard with the edit form filled in for that expense          |
-| POST   | `/update/<id>` | Validates the form and saves the changes                         |
-| POST   | `/delete/<id>` | Deletes an expense by id                                         |
-| GET    | `/export`      | Downloads filtered expenses as CSV (same query params as `/`)    |
+| Method | Route                   | Description                                                        |
+|--------|-------------------------|--------------------------------------------------------------------|
+| GET    | `/`                     | Home. Goes to `/expenses/` until the dashboard is built            |
+| GET    | `/expenses/`            | Expenses page. Optional query params: `start`, `end`, `category`   |
+| POST   | `/expenses/add`         | Validates the form and creates an expense                          |
+| GET    | `/expenses/edit/<id>`   | Expenses page with the edit form filled in for that expense        |
+| POST   | `/expenses/update/<id>` | Validates the form and saves the changes                           |
+| POST   | `/expenses/delete/<id>` | Deletes an expense by id                                           |
+| GET    | `/expenses/export`      | Downloads filtered expenses as CSV (same query params as the page) |
 
 ## Data Model
 

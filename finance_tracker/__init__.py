@@ -7,7 +7,7 @@ import os
 
 from flask import Flask
 
-from . import config, db, importer
+from . import config, db, importer, web
 
 
 def create_app(test_config=None):
@@ -20,6 +20,7 @@ def create_app(test_config=None):
     os.makedirs(os.path.dirname(os.path.abspath(app.config["DATABASE"])), exist_ok=True)
     db.init_app(app)
     importer.init_app(app)
+    web.init_app(app)
 
     _register_blueprints(app)
     return app

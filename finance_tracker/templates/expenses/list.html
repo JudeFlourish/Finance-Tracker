@@ -1,31 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
 
-<nav class="navbar">
-    <a href="/" class="logo">Expense Tracker</a>
-</nav>
+{% block title %}Expenses · Finance Tracker{% endblock %}
 
-<main class="container">
-    <h1>Dashboard</h1>
+{% block content %}
+    <h1>Expenses</h1>
     <p class="subtitle">Track spending, filter by date/category, and visualize instantly.</p>
-
-    <!-- messages from the last add, edit or delete, shown once -->
-    {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="{{ category }}">{{ message }}</div>
-    {% endfor %}
 
     <div class="top">
         <!-- filters use GET so they stay in the url -->
         <section class="card">
             <h2>Filters</h2>
-            <form action="/" method="get" class="filters">
+            <form action="{{ url_for('expenses.index') }}" method="get" class="filters">
                 <div class="field">
                     <label>Start</label>
                     <input type="date" name="start" value="{{ start }}">
@@ -44,7 +29,7 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-blue">Apply</button>
-                <a href="/" class="btn">Reset</a>
+                <a href="{{ url_for('expenses.index') }}" class="btn">Reset</a>
             </form>
 
             <p class="total-row">Total: <span class="pill">${{ "%.2f"|format(total) }}</span></p>
@@ -85,7 +70,7 @@
         {% else %}
         <section class="card">
             <h2>Add Expense</h2>
-            <form action="/add" method="post">
+            <form action="{{ url_for('expenses.add_expense') }}" method="post">
                 <input type="hidden" name="next" value="{{ next_url }}">
                 <div class="field">
                     <label>Description</label>
@@ -142,7 +127,7 @@
                                 <input type="hidden" name="next" value="{{ next_url }}">
                                 <button type="submit" class="btn btn-edit">Edit</button>
                             </form>
-                            <form action="/delete/{{ e.id }}" method="post" class="delete-form">
+                            <form action="{{ url_for('expenses.delete_expense', expense_id=e.id) }}" method="post" class="delete-form">
                                 <input type="hidden" name="next" value="{{ next_url }}">
                                 <button type="submit" class="btn-delete">Delete</button>
                             </form>
@@ -177,8 +162,9 @@
             {% endif %}
         </section>
     </div>
-</main>
+{% endblock %}
 
+{% block scripts %}
 <!-- Chart.js library for the charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
@@ -186,6 +172,4 @@
     const chartData = {{ chart_data|tojson }};
 </script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
-
-</body>
-</html>
+{% endblock %}
