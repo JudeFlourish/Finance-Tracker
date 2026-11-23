@@ -95,4 +95,4 @@ def test_redirect_back_uses_next(app):
 
 def test_redirect_back_refuses_other_sites(app):
     with app.test_request_context("/add", method="POST", data={"next": "//evil.com"}):
-        assert redirect_back("expenses.index").location == "/"
+        assert redirect_back("expenses.index").location == "/expenses/"

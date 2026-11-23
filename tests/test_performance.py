@@ -18,7 +18,7 @@ def test_dashboard_loads_under_2_seconds_with_1000_expenses(client, conn):
     ])
 
     start = time.perf_counter()
-    response = client.get("/")
+    response = client.get("/expenses/")
     seconds = time.perf_counter() - start
 
     assert response.status_code == 200

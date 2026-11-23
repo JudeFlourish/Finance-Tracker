@@ -15,7 +15,7 @@ from .filters import ExpenseFilter
 from .repository import ExpenseRepository
 from .validation import validate_expense
 
-bp = Blueprint("expenses", __name__)
+bp = Blueprint("expenses", __name__, url_prefix="/expenses")
 
 
 def _repo():
@@ -30,7 +30,7 @@ def _render_page(next_url, edit_expense=None):
     expense_filter = ExpenseFilter.from_args(request.args)
     expenses = _repo().list(expense_filter)
     return render_template(
-        "index.html",
+        "expenses/list.html",
         expenses=expenses,
         total=total(expenses),
         categories=CATEGORIES,
@@ -44,7 +44,7 @@ def _render_page(next_url, edit_expense=None):
 
 @bp.get("/")
 def index():
-    # full_path ends with "?" when there is no filter, e.g. "/?"
+    # full_path ends with "?" when there is no filter, e.g. "/expenses/?"
     return _render_page(next_url=request.full_path.rstrip("?"))
 
 

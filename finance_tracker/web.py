@@ -1,9 +1,30 @@
 """Small helpers shared by the route modules."""
-from flask import redirect, request, url_for
+from flask import current_app, redirect, request, url_for
+
+# the links in the nav bar, as (label, endpoint)
+# a link only shows once its route exists, so a new page appears in the
+# nav as soon as its route is added (income and budgets come in Sprint 2)
+NAV_LINKS = [
+    ("Expenses", "expenses.index"),
+    ("Income", "income.list_income"),
+    ("Budgets", "budgets.list_budgets"),
+]
+
+
+def nav_links():
+    return [(label, endpoint) for label, endpoint in NAV_LINKS
+            if endpoint in current_app.view_functions]
+
+
+def init_app(app):
+    # makes nav_links available in every template (used by base.html)
+    @app.context_processor
+    def add_nav_links():
+        return {"nav_links": nav_links()}
 
 
 def is_safe_path(target):
-    # only paths on this site, like "/edit/3". "//evil.com" and "\\evil.com"
+    # only paths on this site, like "/expenses/". "//evil.com" and "\\evil.com"
     # are read by browsers as links to another website, so they are refused
     return target.startswith("/") and not target.startswith("//") and "\\" not in target
 

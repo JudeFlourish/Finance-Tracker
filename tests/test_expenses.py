@@ -21,19 +21,19 @@ def messages(client):
 def test_home_page_lists_expenses_and_total(client, add_expense):
     add_expense(description="Lunch", amount="12.50")
     add_expense(description="Bus", amount="3")
-    page = client.get("/").get_data(as_text=True)
+    page = client.get("/expenses/").get_data(as_text=True)
     assert "<td>Lunch</td>" in page and "<td>Bus</td>" in page
     assert "$15.50" in page
 
 
 def test_home_page_empty(client):
-    page = client.get("/").get_data(as_text=True)
+    page = client.get("/expenses/").get_data(as_text=True)
     assert "No expenses yet" in page
 
 
 def test_home_page_escapes_user_input(client, add_expense):
     add_expense(description="<script>alert(1)</script>")
-    page = client.get("/").get_data(as_text=True)
+    page = client.get("/expenses/").get_data(as_text=True)
     assert "<script>alert(1)</script>" not in page
     assert "&lt;script&gt;" in page
 
@@ -63,15 +63,15 @@ def test_add_rejects_invalid_input(client, add_expense, repo, fields, message):
 
 def test_message_is_shown_once(client, add_expense):
     add_expense()
-    assert "Expense added." in client.get("/").get_data(as_text=True)
-    assert "Expense added." not in client.get("/").get_data(as_text=True)
+    assert "Expense added." in client.get("/expenses/").get_data(as_text=True)
+    assert "Expense added." not in client.get("/expenses/").get_data(as_text=True)
 
 
 # edit / update
 
 def test_edit_page_is_prefilled(client, repo):
     new_id = repo.add(Expense(description="Groceries", amount=25.5, date="2026-10-01", category="Food"))
-    page = client.get(f"/edit/{new_id}").get_data(as_text=True)
+    page = client.get(f"/expenses/edit/{new_id}").get_data(as_text=True)
     assert "Edit Expense" in page
     assert 'value="Groceries"' in page
     assert 'value="25.5"' in page
@@ -80,7 +80,7 @@ def test_edit_page_is_prefilled(client, repo):
 
 def test_update_saves_changes(client, repo):
     new_id = repo.add(Expense(description="Groceries", amount=25.5, date="2026-10-01", category="Food"))
-    response = client.post(f"/update/{new_id}", data={
+    response = client.post(f"/expenses/update/{new_id}", data={
         "description": "Groceries Updated", "amount": "30.75", "date": "2026-10-02", "category": "Health",
     })
     assert response.status_code == 302
@@ -92,10 +92,10 @@ def test_update_saves_changes(client, repo):
 
 def test_update_invalid_goes_back_to_edit_form(client, repo):
     new_id = repo.add(Expense(description="Groceries", amount=25.5, date="2026-10-01", category="Food"))
-    response = client.post(f"/update/{new_id}", data={
-        "description": "Groceries", "amount": "0", "next": "/?category=Food",
+    response = client.post(f"/expenses/update/{new_id}", data={
+        "description": "Groceries", "amount": "0", "next": "/expenses/?category=Food",
     })
-    assert response.location.startswith(f"/edit/{new_id}")
+    assert response.location.startswith(f"/expenses/edit/{new_id}")
     assert "next=" in response.location
     assert messages(client) == ["Please enter a positive number"]
     assert repo.get(new_id).amount == 25.5
@@ -106,7 +106,7 @@ def test_update_invalid_goes_back_to_edit_form(client, repo):
 def test_delete_removes_expense(client, add_expense, repo):
     add_expense()
     [saved] = repo.list()
-    response = client.post(f"/delete/{saved.id}")
+    response = client.post(f"/expenses/delete/{saved.id}")
     assert response.status_code == 302
     assert messages(client)[-1] == "Expense deleted."
     assert repo.list() == []
@@ -115,9 +115,9 @@ def test_delete_removes_expense(client, add_expense, repo):
 # unknown ids
 
 @pytest.mark.parametrize("method, url", [
-    ("get", "/edit/99"),
-    ("post", "/update/99"),
-    ("post", "/delete/99"),
+    ("get", "/expenses/edit/99"),
+    ("post", "/expenses/update/99"),
+    ("post", "/expenses/delete/99"),
 ])
 def test_unknown_id_returns_404(client, method, url):
     response = getattr(client, method)(url, data={"description": "X", "amount": "1"})
@@ -127,48 +127,48 @@ def test_unknown_id_returns_404(client, method, url):
 # going back to the same filtered page
 
 def test_add_returns_to_filtered_page(add_expense):
-    response = add_expense(next="/?category=Food")
-    assert response.location == "/?category=Food"
+    response = add_expense(next="/expenses/?category=Food")
+    assert response.location == "/expenses/?category=Food"
 
 
 def test_delete_returns_to_filtered_page(client, add_expense, repo):
     add_expense()
     [saved] = repo.list()
-    response = client.post(f"/delete/{saved.id}", data={"next": "/?start=2026-11-01"})
-    assert response.location == "/?start=2026-11-01"
+    response = client.post(f"/expenses/delete/{saved.id}", data={"next": "/expenses/?start=2026-11-01"})
+    assert response.location == "/expenses/?start=2026-11-01"
 
 
 def test_update_returns_to_filtered_page(client, add_expense, repo):
     add_expense()
     [saved] = repo.list()
-    response = client.post(f"/update/{saved.id}", data={
-        "description": "Lunch", "amount": "5", "next": "/?category=Food",
+    response = client.post(f"/expenses/update/{saved.id}", data={
+        "description": "Lunch", "amount": "5", "next": "/expenses/?category=Food",
     })
-    assert response.location == "/?category=Food"
+    assert response.location == "/expenses/?category=Food"
 
 
 def test_next_to_another_site_is_ignored(add_expense):
     response = add_expense(next="//evil.com")
-    assert response.location == "/"
+    assert response.location == "/expenses/"
 
 
 def test_forms_carry_the_current_filter(client, add_expense):
     add_expense()
-    page = client.get("/?category=Food").get_data(as_text=True)
-    assert 'name="next" value="/?category=Food"' in page
+    page = client.get("/expenses/?category=Food").get_data(as_text=True)
+    assert 'name="next" value="/expenses/?category=Food"' in page
 
 
 def test_edit_cancel_goes_back_to_filtered_page(client, add_expense, repo):
     add_expense()
     [saved] = repo.list()
-    page = client.get(f"/edit/{saved.id}?next=/%3Fcategory%3DFood").get_data(as_text=True)
-    assert 'href="/?category=Food"' in page
+    page = client.get(f"/expenses/edit/{saved.id}?next=/expenses/%3Fcategory%3DFood").get_data(as_text=True)
+    assert 'href="/expenses/?category=Food"' in page
 
 
 def test_edit_ignores_unsafe_next(client, add_expense, repo):
     add_expense()
     [saved] = repo.list()
-    page = client.get(f"/edit/{saved.id}?next=//evil.com").get_data(as_text=True)
+    page = client.get(f"/expenses/edit/{saved.id}?next=//evil.com").get_data(as_text=True)
     assert "evil.com" not in page
 
 
@@ -182,26 +182,26 @@ def three_expenses(add_expense):
 
 
 def test_filter_by_category(client, three_expenses):
-    page = client.get("/?category=Food").get_data(as_text=True)
+    page = client.get("/expenses/?category=Food").get_data(as_text=True)
     assert "<td>Lunch</td>" in page and "<td>Dinner</td>" in page
     assert "<td>Bus</td>" not in page
     assert "$32.50" in page
 
 
 def test_filter_by_date_range(client, three_expenses):
-    page = client.get("/?start=2026-11-02&end=2026-11-09").get_data(as_text=True)
+    page = client.get("/expenses/?start=2026-11-02&end=2026-11-09").get_data(as_text=True)
     assert "<td>Bus</td>" in page
     assert "<td>Lunch</td>" not in page and "<td>Dinner</td>" not in page
 
 
 def test_bad_filter_values_are_ignored(client, three_expenses):
-    response = client.get("/?start=2026-02-30&category=Pizza")
+    response = client.get("/expenses/?start=2026-02-30&category=Pizza")
     assert response.status_code == 200
     assert "$35.50" in response.get_data(as_text=True)
 
 
 def test_export_matches_filter_oldest_first(client, three_expenses):
-    response = client.get("/export?category=Food")
+    response = client.get("/expenses/export?category=Food")
     assert response.mimetype == "text/csv"
     assert "attachment; filename=expenses.csv" in response.headers["Content-Disposition"]
     assert response.get_data(as_text=True).splitlines() == [
