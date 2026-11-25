@@ -71,3 +71,34 @@ def recent_transactions(expenses, income, limit=5):
     # sort is stable, so on the same day the order the repositories gave is kept
     items.sort(key=lambda t: t.date, reverse=True)
     return items[:limit]
+
+
+@dataclass(frozen=True)
+class BudgetProgress:
+    """How much of one category's monthly budget has been spent (US-05)."""
+    category: str
+    limit: float
+    spent: float
+
+    @property
+    def remaining(self):
+        """Negative when more was spent than the limit."""
+        return self.limit - self.spent
+
+    @property
+    def over(self):
+        return self.spent > self.limit
+
+    @property
+    def percent(self):
+        """For the progress bar width, so capped at 100."""
+        return min(100, round(self.spent / self.limit * 100))
+
+
+def budget_progress(budgets, expenses):
+    """Spent vs limit for every budget. expenses should be one month's expenses;
+    categories without a budget are left out."""
+    spent = {}
+    for e in expenses:
+        spent[e.category] = spent.get(e.category, 0) + e.amount
+    return [BudgetProgress(b.category, b.monthly_limit, spent.get(b.category, 0)) for b in budgets]

@@ -32,6 +32,30 @@
         </section>
     </div>
 
+    <section class="card">
+        <h2>Budgets this month</h2>
+        {% for b in budgets %}
+        <div class="budget-row">
+            <div class="budget-head">
+                <span><span class="dot" style="background: {{ colors[b.category] }}"></span>{{ b.category }}</span>
+                <span>${{ "%.2f"|format(b.spent) }} of ${{ "%.2f"|format(b.limit) }}</span>
+            </div>
+            <!-- the bar stops at 100%, the text below says how much over it is -->
+            <div class="progress" role="progressbar" aria-label="{{ b.category }} budget used"
+                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ b.percent }}">
+                <div class="progress-fill{{ ' over' if b.over }}" style="width: {{ b.percent }}%"></div>
+            </div>
+            {% if b.over %}
+            <p class="budget-note negative">${{ "%.2f"|format(-b.remaining) }} over</p>
+            {% else %}
+            <p class="budget-note">${{ "%.2f"|format(b.remaining) }} left</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="empty">No budgets yet. <a href="{{ url_for('budgets.list_budgets') }}" class="small-link">Set a budget</a></p>
+        {% endfor %}
+    </section>
+
     <div class="top even">
         <section class="card">
             <h2>Quick add: expense</h2>
