@@ -2,7 +2,11 @@ from datetime import date
 
 import pytest
 
-from finance_tracker.dashboard.stats import Month, Transaction, parse_month, recent_transactions
+from finance_tracker.budgets.models import Budget
+from finance_tracker.budgets.repository import BudgetRepository
+from finance_tracker.dashboard.stats import (
+    BudgetProgress, Month, Transaction, budget_progress, parse_month, recent_transactions,
+)
 from finance_tracker.expenses.models import Expense
 from finance_tracker.expenses.repository import ExpenseRepository
 from finance_tracker.income.models import Income
@@ -174,3 +178,74 @@ def test_quick_add_expense_and_income(client, conn):
     assert response.location == "/?month=2026-11"
     page = client.get("/?month=2026-11").get_data(as_text=True)
     assert "$90.00" in page  # balance
+
+
+# budget progress (US-05)
+
+def food(amount, day="2026-11-05"):
+    return Expense(description="Food shop", amount=amount, date=day, category="Food")
+
+
+@pytest.mark.parametrize("spent, remaining, over, percent", [
+    (0, 300, False, 0),
+    (120, 180, False, 40),
+    (300, 0, False, 100),     # exactly on the limit is not over
+    (350, -50, True, 100),    # the bar stops at 100
+])
+def test_budget_progress_numbers(spent, remaining, over, percent):
+    p = BudgetProgress("Food", 300, spent)
+    assert (p.remaining, p.over, p.percent) == (remaining, over, percent)
+
+
+def test_budget_progress_adds_up_spending_per_category():
+    budgets = [Budget(category="Food", monthly_limit=300), Budget(category="Rent", monthly_limit=700)]
+    expenses = [food(100), food(20.5), Expense(description="Bus", amount=3, date="2026-11-05", category="Transport")]
+    assert budget_progress(budgets, expenses) == [
+        BudgetProgress("Food", 300, 120.5),
+        BudgetProgress("Rent", 700, 0),
+    ]
+
+
+def test_budget_progress_without_budgets():
+    # spending in a category without a budget is simply not shown
+    assert budget_progress([], [food(100)]) == []
+
+
+@pytest.fixture
+def food_budget(conn):
+    BudgetRepository(conn).save(Budget(category="Food", monthly_limit=300))
+
+
+def test_dashboard_shows_spent_of_limit(client, conn, food_budget):
+    ExpenseRepository(conn).add(food(120))
+    page = client.get("/?month=2026-11").get_data(as_text=True)
+    budgets = page.split("<h2>Budgets this month</h2>")[1].split("</section>")[0]
+    assert "Food" in budgets
+    assert "$120.00 of $300.00" in budgets
+    assert "$180.00 left" in budgets
+    assert 'class="progress-fill" style="width: 40%"' in budgets
+    assert "budget-note negative" not in budgets
+
+
+def test_dashboard_shows_over_budget_in_red(client, conn, food_budget):
+    ExpenseRepository(conn).add(food(350))
+    page = client.get("/?month=2026-11").get_data(as_text=True)
+    budgets = page.split("<h2>Budgets this month</h2>")[1].split("</section>")[0]
+    assert '<p class="budget-note negative">$50.00 over</p>' in budgets
+    assert 'class="progress-fill over" style="width: 100%"' in budgets
+
+
+def test_budget_counts_only_the_selected_month(client, conn, food_budget):
+    ExpenseRepository(conn).add(food(120, "2026-11-05"))
+    ExpenseRepository(conn).add(food(500, "2026-10-05"))
+    november = client.get("/?month=2026-11").get_data(as_text=True)
+    october = client.get("/?month=2026-10").get_data(as_text=True)
+    assert "$120.00 of $300.00" in november
+    assert "$500.00 of $300.00" in october and "$200.00 over" in october
+
+
+def test_dashboard_without_budgets_links_to_budgets_page(client):
+    page = client.get("/?month=2026-11").get_data(as_text=True)
+    budgets = page.split("<h2>Budgets this month</h2>")[1].split("</section>")[0]
+    assert "No budgets yet." in budgets
+    assert 'href="/budgets/"' in budgets

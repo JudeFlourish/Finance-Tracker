@@ -7,7 +7,7 @@ The goal of this project was to learn server-side web development: routing, hand
 ## Features
 
 - **Add, edit and delete expenses** with a description, amount, date and category
-- **Home dashboard:** pick a month and see its income, spending and balance (income − spending), quick-add an expense or income, recent activity and charts
+- **Home dashboard:** pick a month and see its income, spending and balance (income − spending), quick-add an expense or income, budget progress (spent vs limit per category), recent activity and charts
 - **Income:** record money coming in (source, amount, date), see the total, delete entries; kept apart from expenses
 - **Monthly budgets:** set, change or remove a spending limit for any category
 - **Filter** by start date, end date and category
@@ -136,14 +136,14 @@ python-finance-tracker/
 │   │   ├── repository.py    # BudgetRepository (SQL only, one budget per category)
 │   │   └── routes.py        # budgets page: set, change, remove
 │   ├── dashboard/
-│   │   ├── stats.py         # Month, parse_month(), recent_transactions() (plain functions)
+│   │   ├── stats.py         # Month, recent_transactions(), budget_progress() (plain functions)
 │   │   └── routes.py        # home page; only reads the other features' repositories
 │   ├── templates/
 │   │   ├── base.html        # shared layout: nav bar, flash messages
 │   │   ├── 404.html         # page not found, in the app's layout
 │   │   ├── _forms.html      # expense and income form fields, shared by every form
 │   │   ├── dashboard/
-│   │   │   └── home.html    # month totals, balance, quick add, recent activity, charts
+│   │   │   └── home.html    # month totals, balance, budget progress, quick add, recent activity, charts
 │   │   ├── expenses/
 │   │   │   ├── list.html    # expenses page (filters, add form, list, charts)
 │   │   │   └── edit.html    # edit one expense
@@ -159,7 +159,7 @@ python-finance-tracker/
 │   ├── conftest.py          # app, client and conn fixtures (temporary database)
 │   ├── test_app_factory.py
 │   ├── test_budgets.py      # budgets page, repository, rules and validation
-│   ├── test_dashboard.py    # months, balance, recent activity, quick add
+│   ├── test_dashboard.py    # months, balance, budget progress, recent activity, quick add
 │   ├── test_db.py           # schema, constraints, connection handling
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts

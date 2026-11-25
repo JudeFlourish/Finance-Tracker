@@ -8,7 +8,8 @@ from datetime import date
 
 from flask import Blueprint, render_template, request
 
-from ..categories import CATEGORIES
+from ..budgets.repository import BudgetRepository
+from ..categories import CATEGORIES, COLORS
 from ..charts import chart_data
 from ..db import get_db
 from ..expenses.filters import ExpenseFilter
@@ -28,6 +29,7 @@ def home():
     conn = get_db()
     expenses = ExpenseRepository(conn).list(ExpenseFilter(start=month.start, end=month.end))
     income = IncomeRepository(conn).list(start=month.start, end=month.end)
+    budgets = BudgetRepository(conn).list()
 
     spent = total(expenses)
     earned = total(income)
@@ -38,6 +40,8 @@ def home():
         earned=earned,
         spent=spent,
         balance=earned - spent,
+        budgets=stats.budget_progress(budgets, expenses),
+        colors=COLORS,
         recent=stats.recent_transactions(expenses, income),
         chart_data=chart_data(expenses),
         has_expenses=bool(expenses),

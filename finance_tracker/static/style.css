@@ -144,6 +144,45 @@ h2 {
     color: #f87171;
 }
 
+/* budget progress on the dashboard */
+.budget-row {
+    margin-bottom: 16px;
+}
+
+.budget-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.progress {
+    height: 10px;
+    background: #1e293b;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #38bdf8;
+}
+
+.progress-fill.over {
+    background: #f87171;
+}
+
+.budget-note {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* .negative has to win over the grey of .budget-note */
+.budget-note.negative {
+    color: #f87171;
+}
+
 /* ---------- forms ---------- */
 
 .filters {
