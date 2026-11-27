@@ -151,7 +151,9 @@ python-finance-tracker/
 │   │   ├── models.py        # User model (users table: email, password hash, created_at)
 │   │   ├── passwords.py     # hash_password() / check_password() (werkzeug, scrypt + salt)
 │   │   ├── validation.py    # validate_registration(): email and password rules
-│   │   └── repository.py    # UserRepository: add, get, get_by_email
+│   │   ├── repository.py    # UserRepository: add, get, get_by_email
+│   │   ├── login.py         # Flask-Login set-up: finds the logged-in user on each request
+│   │   └── routes.py        # /register
 │   ├── expenses/
 │   │   ├── models.py        # Expense model (expenses table)
 │   │   ├── filters.py       # ExpenseFilter (date range and category from the url, as query conditions)
@@ -172,9 +174,11 @@ python-finance-tracker/
 │   │   ├── stats.py         # Month, recent_transactions(), budget_progress() (plain functions)
 │   │   └── routes.py        # home page; only reads the other features' repositories
 │   ├── templates/
-│   │   ├── base.html        # shared layout: nav bar, flash messages
+│   │   ├── base.html        # shared layout: nav bar (with Register or your email), flash messages
 │   │   ├── 404.html         # page not found, in the app's layout
 │   │   ├── _forms.html      # expense and income form fields, shared by every form
+│   │   ├── auth/
+│   │   │   └── register.html  # create an account
 │   │   ├── dashboard/
 │   │   │   └── home.html    # month totals, balance, budget progress, quick add, recent activity, charts
 │   │   ├── expenses/
@@ -201,6 +205,7 @@ python-finance-tracker/
 │   ├── test_income.py       # income page, repository, rules and validation
 │   ├── test_migrations.py   # new and old databases upgrade, data kept, models match migrations
 │   ├── test_performance.py  # expenses page and dashboard under 2 s with 1,000 expenses
+│   ├── test_register.py     # register page: success, each error, duplicate email, logged in after
 │   └── test_validation.py   # shared parsers and redirect_back
 ├── migrations/
 │   ├── env.py               # Alembic set-up (made by flask db init)
@@ -228,6 +233,8 @@ python-finance-tracker/
 | GET    | `/budgets/`             | Budgets page: every category with its monthly limit                |
 | POST   | `/budgets/`             | Sets a category's budget, or changes it if it already has one      |
 | POST   | `/budgets/<id>/delete`  | Removes a budget (its category's expenses are kept)                |
+| GET    | `/register`             | Register page (sends you to the dashboard if already logged in)    |
+| POST   | `/register`             | Creates the account, logs you in and opens the dashboard           |
 
 ## Data Model
 

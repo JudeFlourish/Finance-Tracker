@@ -17,6 +17,15 @@
            class="nav-link{% if request.blueprint == endpoint.split('.')[0] %} active{% endif %}">{{ label }}</a>
         {% endfor %}
     </div>
+    <!-- who is logged in; current_user comes from Flask-Login -->
+    <div class="nav-account">
+        {% if current_user.is_authenticated %}
+        <span class="nav-user">{{ current_user.email }}</span>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}"
+           class="nav-link{% if request.endpoint == 'auth.register' %} active{% endif %}">Register</a>
+        {% endif %}
+    </div>
 </nav>
 
 <main class="container">
