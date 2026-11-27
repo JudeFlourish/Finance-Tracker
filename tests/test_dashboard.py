@@ -84,10 +84,10 @@ def test_recent_keeps_only_the_newest_five():
 # the page
 
 @pytest.fixture
-def november(conn, session):
+def november(session):
     # October and November data, so the page must pick the right month
     expenses = ExpenseRepository(session)
-    income = IncomeRepository(conn)
+    income = IncomeRepository(session)
     expenses.add(Expense(description="Rent", amount=700, date="2026-11-01", category="Rent"))
     expenses.add(Expense(description="Lunch", amount=12.5, date="2026-11-05", category="Food"))
     expenses.add(Expense(description="Old lunch", amount=99, date="2026-10-20", category="Food"))
@@ -111,9 +111,9 @@ def test_empty_month_has_zero_balance(client, november):
     assert "negative" not in balance
 
 
-def test_balance_below_zero(client, conn, session):
+def test_balance_below_zero(client, session):
     ExpenseRepository(session).add(Expense(description="Rent", amount=700, date="2026-11-01", category="Rent"))
-    IncomeRepository(conn).add(Income(source="Gift", amount=200, date="2026-11-02"))
+    IncomeRepository(session).add(Income(source="Gift", amount=200, date="2026-11-02"))
     page = client.get("/?month=2026-11").get_data(as_text=True)
     balance = page.split("<h2>Balance</h2>")[1].split("</section>")[0]
     assert 'class="stat-value negative"' in balance
@@ -168,7 +168,7 @@ def test_quick_add_date_is_first_of_other_month(client):
     assert 'value="2020-05-01"' in page
 
 
-def test_quick_add_expense_and_income(client, conn):
+def test_quick_add_expense_and_income(client):
     client.post("/expenses/add", data={
         "description": "Lunch", "amount": "10", "date": "2026-11-05", "category": "Food", "next": "/?month=2026-11",
     })
@@ -212,8 +212,8 @@ def test_budget_progress_without_budgets():
 
 
 @pytest.fixture
-def food_budget(conn):
-    BudgetRepository(conn).save(Budget(category="Food", monthly_limit=300))
+def food_budget(session):
+    BudgetRepository(session).save(Budget(category="Food", monthly_limit=300))
 
 
 def test_dashboard_shows_spent_of_limit(client, session, food_budget):

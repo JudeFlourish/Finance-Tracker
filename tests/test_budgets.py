@@ -1,6 +1,7 @@
 import sqlite3
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from finance_tracker import create_app
 from finance_tracker.budgets.models import Budget
@@ -12,8 +13,8 @@ from finance_tracker.validation import ValidationError
 
 
 @pytest.fixture
-def repo(conn):
-    return BudgetRepository(conn)
+def repo(session):
+    return BudgetRepository(session)
 
 
 # create, change, delete
@@ -68,15 +69,27 @@ def test_list_empty(repo):
 
 @pytest.mark.parametrize("limit", [0, -10])
 def test_database_rejects_limit_of_zero_or_less(repo, limit):
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(IntegrityError):
         repo.save(Budget(category="Food", monthly_limit=limit))
     assert repo.list() == []
 
 
-def test_database_allows_one_budget_per_category(conn):
-    conn.execute("INSERT INTO budgets (category, monthly_limit) VALUES ('Food', 100)")
-    with pytest.raises(sqlite3.IntegrityError):
-        conn.execute("INSERT INTO budgets (category, monthly_limit) VALUES ('Food', 200)")
+def test_failed_change_keeps_the_old_limit_and_the_session_works(repo):
+    repo.save(Budget(category="Food", monthly_limit=300))
+    with pytest.raises(IntegrityError):
+        repo.save(Budget(category="Food", monthly_limit=-1))
+    assert repo.get_by_category("Food").monthly_limit == 300
+    repo.save(Budget(category="Rent", monthly_limit=700))
+    assert [b.category for b in repo.list()] == ["Food", "Rent"]
+
+
+def test_database_allows_one_budget_per_category(session):
+    # add() skips save()'s "change it if it exists", so only the UNIQUE rule can stop it
+    session.add(Budget(category="Food", monthly_limit=100))
+    session.commit()
+    session.add(Budget(category="Food", monthly_limit=200))
+    with pytest.raises(IntegrityError):
+        session.commit()
 
 
 def test_existing_database_gets_budgets_table_on_start(tmp_path):

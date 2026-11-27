@@ -2,7 +2,7 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 from ..categories import CATEGORIES, COLORS
-from ..db import get_db
+from ..database import db
 from ..validation import ValidationError
 from .repository import BudgetRepository
 from .validation import validate_budget
@@ -11,7 +11,7 @@ bp = Blueprint("budgets", __name__, url_prefix="/budgets")
 
 
 def _repo():
-    return BudgetRepository(get_db())
+    return BudgetRepository(db.session)
 
 
 @bp.get("/")
