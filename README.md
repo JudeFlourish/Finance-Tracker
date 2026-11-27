@@ -101,7 +101,7 @@ Each test uses its own temporary database, so your real data is never touched.
 - **Tests must pass before merge.** Run `uv run pytest` before opening a pull request. No pull request is merged into `main` while a test is failing.
 - **Add tests with every change**, one test file per feature (`tests/test_<feature>.py`).
 - **Every pull request is reviewed** and approved by another team member before it is merged.
-- **Follow the structure:** code is grouped by feature (`expenses/`, `income/`, `budgets/`, `dashboard/`); routes handle HTTP only, rules go in `validation.py` and SQL in `repository.py`; features don't import each other, except the dashboard reading repositories.
+- **Follow the structure:** code is grouped by feature (`expenses/`, `income/`, `budgets/`, `dashboard/`); routes handle HTTP only, rules go in `validation.py` and database access in `repository.py`; features don't import each other, except the dashboard reading repositories.
 
 ## Project Structure
 
@@ -112,7 +112,7 @@ python-finance-tracker/
 │   ├── __init__.py          # create_app(): config, database, one blueprint per feature
 │   ├── config.py            # settings from environment variables
 │   ├── database.py          # SQLAlchemy set-up (db), creates the tables, init-db command
-│   ├── db.py                # plain SQLite connection per request, used by the repositories
+│   ├── db.py                # plain SQLite connection per request, used by the income and budget repositories
 │   ├── categories.py        # category list and chart colours
 │   ├── models.py            # Entry base model (shared by expenses and income)
 │   ├── validation.py        # ValidationError + shared field parsers
@@ -121,9 +121,9 @@ python-finance-tracker/
 │   ├── importer.py          # flask import-json command (old expenses.json)
 │   ├── expenses/
 │   │   ├── models.py        # Expense model (expenses table)
-│   │   ├── filters.py       # ExpenseFilter (date range and category from the url)
+│   │   ├── filters.py       # ExpenseFilter (date range and category from the url, as query conditions)
 │   │   ├── validation.py    # validate_expense()
-│   │   ├── repository.py    # ExpenseRepository (SQL only)
+│   │   ├── repository.py    # ExpenseRepository (SQLAlchemy session)
 │   │   └── routes.py        # list, add, edit, delete, export
 │   ├── income/
 │   │   ├── models.py        # Income model (an Entry, like Expense)
@@ -160,7 +160,7 @@ python-finance-tracker/
 │   ├── test_app_factory.py
 │   ├── test_budgets.py      # budgets page, repository, rules and validation
 │   ├── test_dashboard.py    # months, balance, budget progress, recent activity, quick add
-│   ├── test_db.py           # schema, constraints, connection handling
+│   ├── test_db.py           # tables, constraints, SQLAlchemy session, connection handling
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
 │   ├── test_importer.py     # import-json: good, bad and partly bad files
@@ -232,7 +232,7 @@ Categories: Food, Transport, Rent, Utilities, Health, Entertainment, Education, 
 - **ISO dates.** Dates are stored as `YYYY-MM-DD` strings, so date-range filtering is a simple string comparison with no parsing.
 - **Validation on the server.** The HTML form checks input in the browser, but the backend validates everything again, because requests can be sent without using the form.
 - **Safe ids.** SQLite `AUTOINCREMENT` ids are never reused, even after deletions. Unknown ids return 404.
-- **Layers.** Routes only handle HTTP; validation and SQL live in their own modules (`validation.py`, `repository.py`).
+- **Layers.** Routes only handle HTTP; validation and database access live in their own modules (`validation.py`, `repository.py`).
 - **Safe output and queries.** Jinja2 escapes user input when rendering, chart data is passed to JavaScript with `tojson`, and SQL always uses `?` parameters.
 - **Charts are prepared in Python.** Totals per category and per day are calculated on the backend; JavaScript only draws them.
 - **Fast with real amounts of data.** With 1,000 expenses the dashboard and the expenses page are each served in well under 0.1 seconds (the target is under 2 seconds). Filtering by date uses an index; `tests/test_performance.py` checks the target on every test run.

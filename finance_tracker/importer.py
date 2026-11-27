@@ -4,7 +4,7 @@ import json
 import click
 from flask.cli import with_appcontext
 
-from .db import get_db
+from .database import db
 from .expenses.repository import ExpenseRepository
 from .expenses.validation import validate_expense
 from .validation import ValidationError
@@ -48,7 +48,7 @@ def import_json_command(path):
     except ImportFailed as error:
         raise click.ClickException(f"{error}. Nothing was imported.")
     # one transaction: every expense is saved, or none
-    count = ExpenseRepository(get_db()).add_many(expenses)
+    count = ExpenseRepository(db.session).add_many(expenses)
     click.echo(f"Imported {count} expenses.")
 
 

@@ -1,71 +1,67 @@
+from sqlalchemy import asc, desc, select
+
 from .filters import ExpenseFilter
 from .models import Expense
 
-# named columns instead of SELECT *, so adding a column to the table
-# later doesn't change what these queries return
-_COLUMNS = "id, description, amount, date, category"
-
-
-def _to_expense(row):
-    return Expense(
-        id=row["id"],
-        description=row["description"],
-        amount=row["amount"],
-        date=row["date"],
-        category=row["category"],
-    )
-
 
 class ExpenseRepository:
-    """All SQL for the expenses table. Gets its connection from outside,
-    so tests can pass in a temporary database."""
+    """All database access for expenses. Gets its SQLAlchemy session from
+    outside (db.session), so tests can use a temporary database."""
 
-    def __init__(self, conn):
-        self.conn = conn
+    def __init__(self, session):
+        self.session = session
+
+    def _commit(self):
+        """One transaction: everything since the last commit is saved, or nothing is."""
+        try:
+            self.session.commit()
+        except Exception:
+            # after a failed commit the session can't be used until it is rolled back
+            self.session.rollback()
+            raise
 
     def add(self, expense):
-        with self.conn:  # one transaction: commits, or rolls back on error
-            cursor = self.conn.execute(
-                "INSERT INTO expenses (description, amount, date, category) VALUES (?, ?, ?, ?)",
-                (expense.description, expense.amount, expense.date, expense.category),
-            )
-        return cursor.lastrowid
+        self.session.add(expense)
+        self._commit()
+        return expense.id  # the database gives the id on commit
 
     def add_many(self, expenses):
         """Insert all of them in one transaction: either every row is saved or none."""
-        with self.conn:
-            self.conn.executemany(
-                "INSERT INTO expenses (description, amount, date, category) VALUES (?, ?, ?, ?)",
-                [(e.description, e.amount, e.date, e.category) for e in expenses],
-            )
+        self.session.add_all(expenses)
+        self._commit()
         return len(expenses)
 
     def get(self, expense_id):
-        row = self.conn.execute(
-            f"SELECT {_COLUMNS} FROM expenses WHERE id = ?", (expense_id,)
-        ).fetchone()
-        return _to_expense(row) if row else None
+        return self.session.get(Expense, expense_id)
 
     def update(self, expense):
-        """Returns False when there is no expense with that id."""
-        with self.conn:
-            cursor = self.conn.execute(
-                "UPDATE expenses SET description = ?, amount = ?, date = ?, category = ? WHERE id = ?",
-                (expense.description, expense.amount, expense.date, expense.category, expense.id),
-            )
-        return cursor.rowcount > 0
+        """Save expense's values onto the stored expense with the same id.
+        Returns False when there is no expense with that id."""
+        saved = self.get(expense.id)
+        if saved is None:
+            return False
+        saved.description = expense.description
+        saved.amount = expense.amount
+        saved.date = expense.date
+        saved.category = expense.category
+        self._commit()  # SQLAlchemy sees which attributes changed and writes the UPDATE
+        return True
 
     def delete(self, expense_id):
         """Returns False when there is no expense with that id."""
-        with self.conn:
-            cursor = self.conn.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
-        return cursor.rowcount > 0
+        saved = self.get(expense_id)
+        if saved is None:
+            return False
+        self.session.delete(saved)
+        self._commit()
+        return True
 
     def list(self, expense_filter=ExpenseFilter(), newest_first=True):
-        where, params = expense_filter.to_sql()
-        order = "DESC" if newest_first else "ASC"
-        # id as a second sort key keeps expenses on the same day in a fixed order
-        rows = self.conn.execute(
-            f"SELECT {_COLUMNS} FROM expenses{where} ORDER BY date {order}, id {order}", params
-        ).fetchall()
-        return [_to_expense(r) for r in rows]
+        order = desc if newest_first else asc
+        query = (
+            select(Expense)
+            .where(*expense_filter.conditions())
+            # id as a second sort key keeps expenses on the same day in a fixed order
+            .order_by(order(Expense.date), order(Expense.id))
+        )
+        return list(self.session.scalars(query))

@@ -35,8 +35,8 @@ def run_import(app, tmp_path):
     return _run
 
 
-def saved(conn):
-    return ExpenseRepository(conn).list(newest_first=False)
+def saved(session):
+    return ExpenseRepository(session).list(newest_first=False)
 
 
 def good(**fields):
@@ -45,33 +45,33 @@ def good(**fields):
     return record
 
 
-def test_imports_old_file_with_same_values(run_import, conn):
+def test_imports_old_file_with_same_values(run_import, session):
     result = run_import(OLD_FILE)
     assert result.exit_code == 0
     assert result.output.strip() == "Imported 2 expenses."
-    assert [e.to_dict() for e in saved(conn)] == [
+    assert [e.to_dict() for e in saved(session)] == [
         {"id": 1, "description": "Lunch", "amount": 12.5, "date": "2026-11-01", "category": "Food"},
         {"id": 2, "description": "Bus", "amount": 3.0, "date": "2026-11-05", "category": "Transport"},
     ]
 
 
-def test_empty_list_imports_nothing(run_import, conn):
+def test_empty_list_imports_nothing(run_import, session):
     result = run_import([])
     assert result.exit_code == 0
     assert result.output.strip() == "Imported 0 expenses."
-    assert saved(conn) == []
+    assert saved(session) == []
 
 
-def test_old_ids_are_not_kept(run_import, conn):
+def test_old_ids_are_not_kept(run_import, session):
     # new ids come from the database, so they never clash with existing rows
-    ExpenseRepository(conn).add(Expense(description="Tea", amount=2, date="2026-11-01", category="Food"))
+    ExpenseRepository(session).add(Expense(description="Tea", amount=2, date="2026-11-01", category="Food"))
     run_import([good(id=1)])
-    assert [e.id for e in saved(conn)] == [1, 2]
+    assert [e.id for e in saved(session)] == [1, 2]
 
 
-def test_unknown_category_becomes_other(run_import, conn):
+def test_unknown_category_becomes_other(run_import, session):
     run_import([good(category="Pizza")])
-    assert saved(conn)[0].category == "Other"
+    assert saved(session)[0].category == "Other"
 
 
 @pytest.mark.parametrize("content, message", [
@@ -80,12 +80,12 @@ def test_unknown_category_becomes_other(run_import, conn):
     ('{"id": 1}', "Expected a list of expenses"),
     ('["Lunch"]', "Expense 1 is not an object"),
 ])
-def test_bad_file_imports_nothing(run_import, conn, content, message):
+def test_bad_file_imports_nothing(run_import, session, content, message):
     result = run_import(content)
     assert result.exit_code == 1
     assert message in result.output
     assert "Nothing was imported." in result.output
-    assert saved(conn) == []
+    assert saved(session) == []
 
 
 @pytest.mark.parametrize("bad, message", [
@@ -98,18 +98,18 @@ def test_bad_file_imports_nothing(run_import, conn, content, message):
     ({"date": "2026-02-30"}, "Please enter a valid date"),
     ({"date": 20261105}, "Please enter a valid date"),
 ])
-def test_one_bad_expense_imports_nothing(run_import, conn, bad, message):
+def test_one_bad_expense_imports_nothing(run_import, session, bad, message):
     # the third expense is broken, so the two good ones are not saved either
     result = run_import([good(), good(), good(**bad)])
     assert result.exit_code == 1
     assert f"Expense 3: {message}" in result.output
-    assert saved(conn) == []
+    assert saved(session) == []
 
 
-def test_not_utf8_file_imports_nothing(app, tmp_path, conn):
+def test_not_utf8_file_imports_nothing(app, tmp_path, session):
     path = tmp_path / "expenses.json"
     path.write_bytes(b"\xff\xfe\x00")
     result = app.test_cli_runner().invoke(args=["import-json", str(path)])
     assert result.exit_code == 1
     assert "Not valid JSON" in result.output
-    assert saved(conn) == []
+    assert saved(session) == []

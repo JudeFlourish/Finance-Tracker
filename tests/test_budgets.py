@@ -46,8 +46,8 @@ def test_delete_unknown_id_returns_false(repo):
     assert repo.delete(99) is False
 
 
-def test_delete_budget_keeps_expenses(conn, repo):
-    expenses = ExpenseRepository(conn)
+def test_delete_budget_keeps_expenses(session, repo):
+    expenses = ExpenseRepository(session)
     expenses.add(Expense(description="Lunch", amount=12.5, date="2026-11-01", category="Food"))
     repo.save(Budget(category="Food", monthly_limit=300))
     repo.delete(repo.get_by_category("Food").id)
@@ -185,14 +185,14 @@ def test_invalid_change_keeps_old_limit(client, repo):
     assert repo.get_by_category("Food").monthly_limit == 300
 
 
-def test_remove_budget_keeps_expenses(client, conn, repo, add_expense):
+def test_remove_budget_keeps_expenses(client, session, repo, add_expense):
     add_expense(description="Lunch", category="Food")
     repo.save(Budget(category="Food", monthly_limit=300))
     response = client.post(f"/budgets/{repo.get_by_category('Food').id}/delete")
     assert response.status_code == 302
     assert messages(client)[-1] == "Budget removed."
     assert repo.list() == []
-    assert [e.description for e in ExpenseRepository(conn).list()] == ["Lunch"]
+    assert [e.description for e in ExpenseRepository(session).list()] == ["Lunch"]
 
 
 def test_remove_unknown_budget_returns_404(client):

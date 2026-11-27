@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
 
 from ..categories import CATEGORIES
-from ..db import get_db
+from ..database import db
 from ..models import total
 from ..validation import ValidationError
 from ..web import is_safe_path, redirect_back
@@ -19,7 +19,7 @@ bp = Blueprint("expenses", __name__, url_prefix="/expenses")
 
 
 def _repo():
-    return ExpenseRepository(get_db())
+    return ExpenseRepository(db.session)
 
 
 @bp.get("/")

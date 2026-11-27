@@ -6,8 +6,8 @@ from finance_tracker.expenses.repository import ExpenseRepository
 
 
 @pytest.fixture
-def repo(conn):
-    return ExpenseRepository(conn)
+def repo(session):
+    return ExpenseRepository(session)
 
 
 def messages(client):
