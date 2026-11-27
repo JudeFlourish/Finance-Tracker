@@ -21,7 +21,7 @@ def repo(conn):
 def test_save_creates_budget(repo):
     repo.save(Budget(category="Food", monthly_limit=300))
     budget = repo.get_by_category("Food")
-    assert budget == Budget(id=budget.id, category="Food", monthly_limit=300)
+    assert budget.to_dict() == {"id": budget.id, "category": "Food", "monthly_limit": 300}
 
 
 def test_get_by_category_without_budget_returns_none(repo):
@@ -32,7 +32,7 @@ def test_save_again_changes_the_limit(repo):
     repo.save(Budget(category="Food", monthly_limit=300))
     first = repo.get_by_category("Food")
     repo.save(Budget(category="Food", monthly_limit=250.5))
-    assert repo.list() == [Budget(id=first.id, category="Food", monthly_limit=250.5)]
+    assert [b.to_dict() for b in repo.list()] == [{"id": first.id, "category": "Food", "monthly_limit": 250.5}]
 
 
 def test_delete_removes_budget(repo):
@@ -102,9 +102,8 @@ def test_existing_database_gets_budgets_table_on_start(tmp_path):
 # validate_budget
 
 def test_validate_budget():
-    assert validate_budget({"category": "Food", "monthly_limit": "300"}) == Budget(
-        category="Food", monthly_limit=300.0,
-    )
+    budget = validate_budget({"category": "Food", "monthly_limit": "300"})
+    assert budget.to_dict() == {"id": None, "category": "Food", "monthly_limit": 300.0}
 
 
 @pytest.mark.parametrize("form, message", [

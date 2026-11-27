@@ -35,9 +35,9 @@ def descriptions(expenses):
 
 def test_add_returns_id_and_get_reads_it_back(repo):
     new_id = repo.add(make())
-    assert repo.get(new_id) == Expense(
-        id=new_id, description="Lunch", amount=12.5, date="2026-11-05", category="Food",
-    )
+    assert repo.get(new_id).to_dict() == {
+        "id": new_id, "description": "Lunch", "amount": 12.5, "date": "2026-11-05", "category": "Food",
+    }
 
 
 def test_get_unknown_id_returns_none(repo):
@@ -70,7 +70,7 @@ def test_update_changes_every_field(repo):
     new_id = repo.add(make())
     changed = Expense(id=new_id, description="Brunch", amount=9, date="2026-11-06", category="Other")
     assert repo.update(changed) is True
-    assert repo.get(new_id) == changed
+    assert repo.get(new_id).to_dict() == changed.to_dict()
 
 
 def test_update_unknown_id_returns_false(repo):
@@ -158,7 +158,9 @@ def test_validate_expense_builds_expense():
     expense = validate_expense({
         "description": " Bus ", "amount": "3", "date": "2026-11-05", "category": "Pizza",
     })
-    assert expense == Expense(description="Bus", amount=3.0, date="2026-11-05", category="Other")
+    assert expense.to_dict() == {
+        "id": None, "description": "Bus", "amount": 3.0, "date": "2026-11-05", "category": "Other",
+    }
 
 
 @pytest.mark.parametrize("form, message", [

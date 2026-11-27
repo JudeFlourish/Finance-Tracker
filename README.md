@@ -24,7 +24,7 @@ The goal of this project was to learn server-side web development: routing, hand
 | Backend  | Python 3, Flask                     |
 | Frontend | HTML (Jinja2 templates), CSS, JavaScript |
 | Charts   | Chart.js                            |
-| Storage  | SQLite                              |
+| Storage  | SQLite, through SQLAlchemy (Flask-SQLAlchemy) |
 | Tooling  | uv (dependencies), pytest (tests)   |
 
 ## Getting Started
@@ -57,8 +57,8 @@ uv run python financeapp.py
 
 Then open **http://127.0.0.1:5000** in your browser.
 
-Expenses are saved in a SQLite database (`instance/finance.db`), which is created
-with its tables on startup. To create it without starting the server:
+Expenses are saved in a SQLite database (`instance/finance.db`). The tables are
+defined as SQLAlchemy models and created on startup. To create it without starting the server:
 
 ```bash
 uv run flask --app financeapp init-db
@@ -111,27 +111,27 @@ python-finance-tracker/
 ├── finance_tracker/
 │   ├── __init__.py          # create_app(): config, database, one blueprint per feature
 │   ├── config.py            # settings from environment variables
-│   ├── db.py                # SQLite connection per request, init-db command
-│   ├── schema.sql           # tables, CHECK constraints, indexes
+│   ├── database.py          # SQLAlchemy set-up (db), creates the tables, init-db command
+│   ├── db.py                # plain SQLite connection per request, used by the repositories
 │   ├── categories.py        # category list and chart colours
-│   ├── models.py            # Entry base class (shared by expenses and income)
+│   ├── models.py            # Entry base model (shared by expenses and income)
 │   ├── validation.py        # ValidationError + shared field parsers
 │   ├── web.py               # redirect_back(), nav bar links, 404 page
 │   ├── charts.py            # chart data (totals per category and per day), expenses only
 │   ├── importer.py          # flask import-json command (old expenses.json)
 │   ├── expenses/
-│   │   ├── models.py        # Expense
+│   │   ├── models.py        # Expense model (expenses table)
 │   │   ├── filters.py       # ExpenseFilter (date range and category from the url)
 │   │   ├── validation.py    # validate_expense()
 │   │   ├── repository.py    # ExpenseRepository (SQL only)
 │   │   └── routes.py        # list, add, edit, delete, export
 │   ├── income/
-│   │   ├── models.py        # Income (an Entry, like Expense)
+│   │   ├── models.py        # Income model (an Entry, like Expense)
 │   │   ├── validation.py    # validate_income()
 │   │   ├── repository.py    # IncomeRepository (SQL only)
 │   │   └── routes.py        # income page: list, total, add, delete
 │   ├── budgets/
-│   │   ├── models.py        # Budget
+│   │   ├── models.py        # Budget model (budgets table)
 │   │   ├── validation.py    # validate_budget()
 │   │   ├── repository.py    # BudgetRepository (SQL only, one budget per category)
 │   │   └── routes.py        # budgets page: set, change, remove
@@ -191,7 +191,7 @@ python-finance-tracker/
 
 ## Data Model
 
-Each expense is one row in the `expenses` table (see `finance_tracker/schema.sql`):
+Each expense is one row in the `expenses` table (see `finance_tracker/expenses/models.py`):
 
 | Column        | Type    | Rule                                   |
 |---------------|---------|----------------------------------------|
