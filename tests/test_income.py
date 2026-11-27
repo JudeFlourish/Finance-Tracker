@@ -63,10 +63,10 @@ def test_delete_unknown_id_returns_false(repo):
     assert repo.delete(99) is False
 
 
-def test_income_is_kept_apart_from_expenses(conn, repo):
+def test_income_is_kept_apart_from_expenses(session, repo):
     repo.add(make())
-    assert ExpenseRepository(conn).list() == []
-    ExpenseRepository(conn).add(Expense(description="Lunch", amount=12.5, date="2026-11-01", category="Food"))
+    assert ExpenseRepository(session).list() == []
+    ExpenseRepository(session).add(Expense(description="Lunch", amount=12.5, date="2026-11-01", category="Food"))
     assert [i.source for i in repo.list()] == ["Salary"]
 
 

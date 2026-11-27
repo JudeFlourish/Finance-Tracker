@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from ..categories import CATEGORIES
 from ..validation import ValidationError, parse_date
+from .models import Expense
 
 ALL = "All"
 
@@ -36,24 +37,20 @@ class ExpenseFilter:
             category=category,
         )
 
-    def to_sql(self):
-        """The WHERE clause and its parameters.
+    def conditions(self):
+        """The WHERE conditions, for select(Expense).where(*conditions).
 
-        Values are always passed as ? parameters, never put into the SQL text,
-        so nothing typed in the url can change the query.
+        SQLAlchemy always sends the values as bound parameters, never inside
+        the SQL text, so nothing typed in the url can change the query.
         """
-        conditions, params = [], []
+        conditions = []
         if self.start:
-            conditions.append("date >= ?")
-            params.append(self.start)
+            conditions.append(Expense.date >= self.start)
         if self.end:
-            conditions.append("date <= ?")
-            params.append(self.end)
+            conditions.append(Expense.date <= self.end)
         if self.category != ALL:
-            conditions.append("category = ?")
-            params.append(self.category)
-        where = " WHERE " + " AND ".join(conditions) if conditions else ""
-        return where, params
+            conditions.append(Expense.category == self.category)
+        return conditions
 
     def as_args(self):
         """For building links (e.g. the CSV export) that keep the current filter."""

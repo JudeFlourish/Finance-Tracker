@@ -11,6 +11,7 @@ from flask import Blueprint, render_template, request
 from ..budgets.repository import BudgetRepository
 from ..categories import CATEGORIES, COLORS
 from ..charts import chart_data
+from ..database import db
 from ..db import get_db
 from ..expenses.filters import ExpenseFilter
 from ..expenses.repository import ExpenseRepository
@@ -27,7 +28,7 @@ def home():
     month = stats.parse_month(request.args.get("month"), today)
 
     conn = get_db()
-    expenses = ExpenseRepository(conn).list(ExpenseFilter(start=month.start, end=month.end))
+    expenses = ExpenseRepository(db.session).list(ExpenseFilter(start=month.start, end=month.end))
     income = IncomeRepository(conn).list(start=month.start, end=month.end)
     budgets = BudgetRepository(conn).list()
 

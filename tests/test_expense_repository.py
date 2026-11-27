@@ -1,6 +1,6 @@
-import sqlite3
-
 import pytest
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from finance_tracker.expenses.filters import ExpenseFilter
 from finance_tracker.expenses.models import Expense
@@ -14,8 +14,8 @@ def make(description="Lunch", amount=12.5, date="2026-11-05", category="Food"):
 
 
 @pytest.fixture
-def repo(conn):
-    return ExpenseRepository(conn)
+def repo(session):
+    return ExpenseRepository(session)
 
 
 @pytest.fixture
@@ -46,9 +46,17 @@ def test_get_unknown_id_returns_none(repo):
 
 def test_add_rejected_by_database_saves_nothing(repo):
     # the CHECK constraint stops a zero amount even if validation is skipped
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(IntegrityError):
         repo.add(make(amount=0))
     assert repo.list() == []
+
+
+def test_session_still_works_after_a_rejected_add(repo):
+    # the failed commit is rolled back, so the next save is not blocked
+    with pytest.raises(IntegrityError):
+        repo.add(make("Bad", amount=0))
+    repo.add(make("Good"))
+    assert descriptions(repo.list()) == ["Good"]
 
 
 # add_many
@@ -59,7 +67,7 @@ def test_add_many_saves_all(repo):
 
 
 def test_add_many_saves_nothing_if_one_row_is_bad(repo):
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(IntegrityError):
         repo.add_many([make("A"), make("B", amount=-1)])
     assert repo.list() == []
 
@@ -71,6 +79,19 @@ def test_update_changes_every_field(repo):
     changed = Expense(id=new_id, description="Brunch", amount=9, date="2026-11-06", category="Other")
     assert repo.update(changed) is True
     assert repo.get(new_id).to_dict() == changed.to_dict()
+
+
+def test_update_does_not_add_a_second_row(repo):
+    new_id = repo.add(make())
+    repo.update(Expense(id=new_id, description="Brunch", amount=9, date="2026-11-06", category="Other"))
+    assert descriptions(repo.list()) == ["Brunch"]
+
+
+def test_failed_update_keeps_the_old_values(repo):
+    new_id = repo.add(make())
+    with pytest.raises(IntegrityError):
+        repo.update(Expense(id=new_id, description="Brunch", amount=-1, date="2026-11-06", category="Other"))
+    assert repo.get(new_id).to_dict()["amount"] == 12.5
 
 
 def test_update_unknown_id_returns_false(repo):
@@ -141,10 +162,16 @@ def test_filter_from_args_ignores_bad_values(args):
     assert ExpenseFilter.from_args(args) == ExpenseFilter()
 
 
-def test_filter_to_sql_uses_parameters():
-    where, params = ExpenseFilter("2026-11-01", "", "Food").to_sql()
-    assert where == " WHERE date >= ? AND category = ?"
-    assert params == ["2026-11-01", "Food"]
+def test_filter_values_are_bound_parameters():
+    # the values never end up inside the SQL text, so the url can't change the query
+    query = select(Expense).where(*ExpenseFilter("2026-11-01", "", "Food' OR 1=1 --").conditions())
+    compiled = query.compile()
+    assert "WHERE expenses.date >= :date_1 AND expenses.category = :category_1" in str(compiled)
+    assert compiled.params == {"date_1": "2026-11-01", "category_1": "Food' OR 1=1 --"}
+
+
+def test_empty_filter_has_no_conditions():
+    assert ExpenseFilter().conditions() == []
 
 
 def test_filter_as_args():

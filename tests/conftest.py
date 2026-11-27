@@ -1,6 +1,7 @@
 import pytest
 
 from finance_tracker import create_app
+from finance_tracker.database import db
 from finance_tracker.db import get_db
 
 
@@ -19,9 +20,22 @@ def client(app):
 
 
 @pytest.fixture
-def conn(app):
+def app_context(app):
+    # one app context for the whole test, shared by conn, session and client requests
     with app.app_context():
-        yield get_db()
+        yield
+
+
+@pytest.fixture
+def conn(app_context):
+    """Plain sqlite3 connection, for the repositories that still use SQL."""
+    return get_db()
+
+
+@pytest.fixture
+def session(app_context):
+    """The SQLAlchemy session, for repositories on SQLAlchemy."""
+    return db.session
 
 
 @pytest.fixture

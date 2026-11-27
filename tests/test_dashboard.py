@@ -84,9 +84,9 @@ def test_recent_keeps_only_the_newest_five():
 # the page
 
 @pytest.fixture
-def november(conn):
+def november(conn, session):
     # October and November data, so the page must pick the right month
-    expenses = ExpenseRepository(conn)
+    expenses = ExpenseRepository(session)
     income = IncomeRepository(conn)
     expenses.add(Expense(description="Rent", amount=700, date="2026-11-01", category="Rent"))
     expenses.add(Expense(description="Lunch", amount=12.5, date="2026-11-05", category="Food"))
@@ -111,8 +111,8 @@ def test_empty_month_has_zero_balance(client, november):
     assert "negative" not in balance
 
 
-def test_balance_below_zero(client, conn):
-    ExpenseRepository(conn).add(Expense(description="Rent", amount=700, date="2026-11-01", category="Rent"))
+def test_balance_below_zero(client, conn, session):
+    ExpenseRepository(session).add(Expense(description="Rent", amount=700, date="2026-11-01", category="Rent"))
     IncomeRepository(conn).add(Income(source="Gift", amount=200, date="2026-11-02"))
     page = client.get("/?month=2026-11").get_data(as_text=True)
     balance = page.split("<h2>Balance</h2>")[1].split("</section>")[0]
@@ -216,8 +216,8 @@ def food_budget(conn):
     BudgetRepository(conn).save(Budget(category="Food", monthly_limit=300))
 
 
-def test_dashboard_shows_spent_of_limit(client, conn, food_budget):
-    ExpenseRepository(conn).add(food(120))
+def test_dashboard_shows_spent_of_limit(client, session, food_budget):
+    ExpenseRepository(session).add(food(120))
     page = client.get("/?month=2026-11").get_data(as_text=True)
     budgets = page.split("<h2>Budgets this month</h2>")[1].split("</section>")[0]
     assert "Food" in budgets
@@ -227,17 +227,17 @@ def test_dashboard_shows_spent_of_limit(client, conn, food_budget):
     assert "budget-note negative" not in budgets
 
 
-def test_dashboard_shows_over_budget_in_red(client, conn, food_budget):
-    ExpenseRepository(conn).add(food(350))
+def test_dashboard_shows_over_budget_in_red(client, session, food_budget):
+    ExpenseRepository(session).add(food(350))
     page = client.get("/?month=2026-11").get_data(as_text=True)
     budgets = page.split("<h2>Budgets this month</h2>")[1].split("</section>")[0]
     assert '<p class="budget-note negative">$50.00 over</p>' in budgets
     assert 'class="progress-fill over" style="width: 100%"' in budgets
 
 
-def test_budget_counts_only_the_selected_month(client, conn, food_budget):
-    ExpenseRepository(conn).add(food(120, "2026-11-05"))
-    ExpenseRepository(conn).add(food(500, "2026-10-05"))
+def test_budget_counts_only_the_selected_month(client, session, food_budget):
+    ExpenseRepository(session).add(food(120, "2026-11-05"))
+    ExpenseRepository(session).add(food(500, "2026-10-05"))
     november = client.get("/?month=2026-11").get_data(as_text=True)
     october = client.get("/?month=2026-10").get_data(as_text=True)
     assert "$120.00 of $300.00" in november
