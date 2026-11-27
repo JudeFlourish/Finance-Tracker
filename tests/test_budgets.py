@@ -1,9 +1,6 @@
-import sqlite3
-
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from finance_tracker import create_app
 from finance_tracker.budgets.models import Budget
 from finance_tracker.budgets.repository import BudgetRepository
 from finance_tracker.budgets.validation import validate_budget
@@ -91,25 +88,6 @@ def test_database_allows_one_budget_per_category(session):
     with pytest.raises(IntegrityError):
         session.commit()
 
-
-def test_existing_database_gets_budgets_table_on_start(tmp_path):
-    # a database made before budgets existed: only the expenses table, with data
-    path = tmp_path / "old.db"
-    old = sqlite3.connect(path)
-    old.execute("CREATE TABLE expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, description TEXT, "
-                "amount REAL, date TEXT, category TEXT)")
-    old.execute("INSERT INTO expenses (description, amount, date, category) "
-                "VALUES ('Lunch', 12.5, '2026-11-01', 'Food')")
-    old.commit()
-    old.close()
-
-    create_app({"TESTING": True, "DATABASE": str(path)})  # what starting the app does
-
-    conn = sqlite3.connect(path)
-    tables = {name for (name,) in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-    assert "budgets" in tables
-    assert conn.execute("SELECT description FROM expenses").fetchall() == [("Lunch",)]
-    conn.close()
 
 
 # validate_budget

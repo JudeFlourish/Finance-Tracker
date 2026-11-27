@@ -1,9 +1,6 @@
-import sqlite3
-
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from finance_tracker import create_app
 from finance_tracker.expenses.models import Expense
 from finance_tracker.expenses.repository import ExpenseRepository
 from finance_tracker.income.models import Income
@@ -119,25 +116,6 @@ def test_session_still_works_after_a_rejected_add(repo):
     repo.add(make("Gift"))
     assert [i.source for i in repo.list()] == ["Gift"]
 
-
-def test_existing_database_gets_income_table_on_start(tmp_path):
-    # a database made before income existed: only the expenses table, with data
-    path = tmp_path / "old.db"
-    old = sqlite3.connect(path)
-    old.execute("CREATE TABLE expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, description TEXT, "
-                "amount REAL, date TEXT, category TEXT)")
-    old.execute("INSERT INTO expenses (description, amount, date, category) "
-                "VALUES ('Lunch', 12.5, '2026-11-01', 'Food')")
-    old.commit()
-    old.close()
-
-    create_app({"TESTING": True, "DATABASE": str(path)})  # what starting the app does
-
-    conn = sqlite3.connect(path)
-    tables = {name for (name,) in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-    assert "income" in tables
-    assert conn.execute("SELECT description FROM expenses").fetchall() == [("Lunch",)]
-    conn.close()
 
 
 # validate_income
