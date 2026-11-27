@@ -1,24 +1,12 @@
 from sqlalchemy import asc, desc, select
 
+from ..repository import Repository
 from .filters import ExpenseFilter
 from .models import Expense
 
 
-class ExpenseRepository:
-    """All database access for expenses. Gets its SQLAlchemy session from
-    outside (db.session), so tests can use a temporary database."""
-
-    def __init__(self, session):
-        self.session = session
-
-    def _commit(self):
-        """One transaction: everything since the last commit is saved, or nothing is."""
-        try:
-            self.session.commit()
-        except Exception:
-            # after a failed commit the session can't be used until it is rolled back
-            self.session.rollback()
-            raise
+class ExpenseRepository(Repository):
+    """All database access for expenses."""
 
     def add(self, expense):
         self.session.add(expense)

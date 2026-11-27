@@ -3,7 +3,7 @@ from datetime import date
 
 from flask import Blueprint, abort, flash, render_template, request
 
-from ..db import get_db
+from ..database import db
 from ..models import total
 from ..validation import ValidationError
 from ..web import redirect_back
@@ -14,7 +14,7 @@ bp = Blueprint("income", __name__, url_prefix="/income")
 
 
 def _repo():
-    return IncomeRepository(get_db())
+    return IncomeRepository(db.session)
 
 
 @bp.get("/")

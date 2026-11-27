@@ -1,6 +1,7 @@
 import sqlite3
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from finance_tracker import create_app
 from finance_tracker.expenses.models import Expense
@@ -17,8 +18,8 @@ def make(source="Salary", amount=1500, date="2026-11-01"):
 
 
 @pytest.fixture
-def repo(conn):
-    return IncomeRepository(conn)
+def repo(session):
+    return IncomeRepository(session)
 
 
 @pytest.fixture
@@ -107,9 +108,16 @@ def test_database_rejects_bad_rows(repo, fields):
     income = make()
     for name, value in fields.items():
         setattr(income, name, value)
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(IntegrityError):
         repo.add(income)
     assert repo.list() == []
+
+
+def test_session_still_works_after_a_rejected_add(repo):
+    with pytest.raises(IntegrityError):
+        repo.add(make(amount=0))
+    repo.add(make("Gift"))
+    assert [i.source for i in repo.list()] == ["Gift"]
 
 
 def test_existing_database_gets_income_table_on_start(tmp_path):

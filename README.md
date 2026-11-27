@@ -112,9 +112,9 @@ python-finance-tracker/
 │   ├── __init__.py          # create_app(): config, database, one blueprint per feature
 │   ├── config.py            # settings from environment variables
 │   ├── database.py          # SQLAlchemy set-up (db), creates the tables, init-db command
-│   ├── db.py                # plain SQLite connection per request, used by the income and budget repositories
 │   ├── categories.py        # category list and chart colours
 │   ├── models.py            # Entry base model (shared by expenses and income)
+│   ├── repository.py        # Repository base class: session + one transaction per save
 │   ├── validation.py        # ValidationError + shared field parsers
 │   ├── web.py               # redirect_back(), nav bar links, 404 page
 │   ├── charts.py            # chart data (totals per category and per day), expenses only
@@ -128,12 +128,12 @@ python-finance-tracker/
 │   ├── income/
 │   │   ├── models.py        # Income model (an Entry, like Expense)
 │   │   ├── validation.py    # validate_income()
-│   │   ├── repository.py    # IncomeRepository (SQL only)
+│   │   ├── repository.py    # IncomeRepository (SQLAlchemy session)
 │   │   └── routes.py        # income page: list, total, add, delete
 │   ├── budgets/
 │   │   ├── models.py        # Budget model (budgets table)
 │   │   ├── validation.py    # validate_budget()
-│   │   ├── repository.py    # BudgetRepository (SQL only, one budget per category)
+│   │   ├── repository.py    # BudgetRepository (SQLAlchemy session, one budget per category)
 │   │   └── routes.py        # budgets page: set, change, remove
 │   ├── dashboard/
 │   │   ├── stats.py         # Month, recent_transactions(), budget_progress() (plain functions)
@@ -160,7 +160,7 @@ python-finance-tracker/
 │   ├── test_app_factory.py
 │   ├── test_budgets.py      # budgets page, repository, rules and validation
 │   ├── test_dashboard.py    # months, balance, budget progress, recent activity, quick add
-│   ├── test_db.py           # tables, constraints, SQLAlchemy session, connection handling
+│   ├── test_db.py           # tables, constraints, SQLAlchemy session
 │   ├── test_expense_repository.py  # repository, filters, validate_expense
 │   ├── test_expenses.py     # routes, filters, export, charts
 │   ├── test_importer.py     # import-json: good, bad and partly bad files

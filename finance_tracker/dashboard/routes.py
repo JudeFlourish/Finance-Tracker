@@ -1,6 +1,6 @@
 """Home dashboard: one month at a glance (US-04, US-05).
 
-Only reads, through the other features' repositories. It never writes SQL;
+Only reads, through the other features' repositories. It never queries the database itself;
 the quick-add forms post to the expenses and income pages, which send the
 user back here with the hidden "next" field.
 """
@@ -12,7 +12,6 @@ from ..budgets.repository import BudgetRepository
 from ..categories import CATEGORIES, COLORS
 from ..charts import chart_data
 from ..database import db
-from ..db import get_db
 from ..expenses.filters import ExpenseFilter
 from ..expenses.repository import ExpenseRepository
 from ..income.repository import IncomeRepository
@@ -27,10 +26,9 @@ def home():
     today = date.today()
     month = stats.parse_month(request.args.get("month"), today)
 
-    conn = get_db()
     expenses = ExpenseRepository(db.session).list(ExpenseFilter(start=month.start, end=month.end))
-    income = IncomeRepository(conn).list(start=month.start, end=month.end)
-    budgets = BudgetRepository(conn).list()
+    income = IncomeRepository(db.session).list(start=month.start, end=month.end)
+    budgets = BudgetRepository(db.session).list()
 
     spent = total(expenses)
     earned = total(income)

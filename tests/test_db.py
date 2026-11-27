@@ -1,16 +1,23 @@
 import sqlite3
 
 import pytest
-from flask import g
 from sqlalchemy import inspect
 from sqlalchemy.exc import IntegrityError
 
 from finance_tracker import create_app
 from finance_tracker.budgets.models import Budget
 from finance_tracker.database import create_tables, db
-from finance_tracker.db import get_db
 from finance_tracker.expenses.models import Expense
 from finance_tracker.income.models import Income
+
+
+@pytest.fixture
+def conn(app):
+    """Plain sqlite3, no SQLAlchemy: proves the database itself enforces the rules."""
+    conn = sqlite3.connect(app.config["DATABASE"])
+    conn.row_factory = sqlite3.Row
+    yield conn
+    conn.close()
 
 
 def insert(conn, description="Lunch", amount=12.5, date="2026-11-05", category="Food"):
@@ -157,18 +164,3 @@ def test_one_budget_per_category(app):
 def test_repr_shows_the_values():
     assert repr(Budget(category="Food", monthly_limit=300)) == "Budget(id=None, category='Food', monthly_limit=300)"
 
-
-# the plain sqlite3 connection (used by the repositories for now)
-
-def test_same_connection_within_a_request(app):
-    with app.app_context():
-        assert get_db() is get_db()
-
-
-def test_connection_is_closed_after_request(app):
-    with app.app_context():
-        conn = get_db()
-        assert "db" in g
-    # using a closed connection raises an error
-    with pytest.raises(sqlite3.ProgrammingError):
-        conn.execute("SELECT 1")
