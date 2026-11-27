@@ -24,7 +24,7 @@ The goal of this project was to learn server-side web development: routing, hand
 | Backend  | Python 3, Flask                     |
 | Frontend | HTML (Jinja2 templates), CSS, JavaScript |
 | Charts   | Chart.js                            |
-| Storage  | SQLite, through SQLAlchemy (Flask-SQLAlchemy) |
+| Storage  | SQLite, through SQLAlchemy (Flask-SQLAlchemy), migrations with Flask-Migrate (Alembic) |
 | Tooling  | uv (dependencies), pytest (tests)   |
 
 ## Getting Started
@@ -46,6 +46,7 @@ cd python-finance-tracker
 
 uv sync            # creates .venv and installs the exact versions from uv.lock
 cp .env.example .env   # then put your own SECRET_KEY in .env
+uv run flask --app financeapp db upgrade   # creates the database and its tables
 ```
 
 ### Run
@@ -58,11 +59,37 @@ uv run python financeapp.py
 Then open **http://127.0.0.1:5000** in your browser.
 
 Expenses are saved in a SQLite database (`instance/finance.db`). The tables are
-defined as SQLAlchemy models and created on startup. To create it without starting the server:
+defined as SQLAlchemy models (`models.py` in each feature folder) and created by the
+migrations in `migrations/versions/`.
+
+### Database migrations
+
+Run this **after every `git pull`** that changes `migrations/`, and once after cloning:
 
 ```bash
-uv run flask --app financeapp init-db
+uv run flask --app financeapp db upgrade
 ```
+
+It brings your database up to the latest version and keeps your data. If you forget,
+the app still starts but writes a reminder to the terminal.
+
+A database made before migrations existed (by `init-db`) is upgraded the same way:
+its tables are rebuilt into the new shape and every row and id is kept. If an old row
+breaks a rule (for example an amount of 0), the upgrade stops before changing anything
+and says which rows to fix.
+
+To change a table:
+
+1. Change the model, e.g. add a column in `expenses/models.py`.
+2. Make a migration: `uv run flask --app financeapp db migrate -m "add notes to expenses" --rev-id 0002`
+   (use the next number after the newest file in `migrations/versions/`).
+3. Read the new file in `migrations/versions/` and fix it if needed. Autogenerate does not
+   notice everything, for example a renamed column looks like a drop plus an add.
+4. Apply it: `uv run flask --app financeapp db upgrade`, then run `uv run pytest`.
+5. Commit the model change and the migration file together.
+
+Other commands: `db current` (version your database is on), `db history` (all migrations),
+`db check` (fails if a model changed without a migration), `db downgrade` (undo the last one).
 
 ### Import old data
 
@@ -101,6 +128,7 @@ Each test uses its own temporary database, so your real data is never touched.
 - **Tests must pass before merge.** Run `uv run pytest` before opening a pull request. No pull request is merged into `main` while a test is failing.
 - **Add tests with every change**, one test file per feature (`tests/test_<feature>.py`).
 - **Every pull request is reviewed** and approved by another team member before it is merged.
+- **A model change always comes with its migration** in the same pull request (see Database migrations).
 - **Follow the structure:** code is grouped by feature (`expenses/`, `income/`, `budgets/`, `dashboard/`); routes handle HTTP only, rules go in `validation.py` and database access in `repository.py`; features don't import each other, except the dashboard reading repositories.
 
 ## Project Structure
@@ -111,7 +139,7 @@ python-finance-tracker/
 ├── finance_tracker/
 │   ├── __init__.py          # create_app(): config, database, one blueprint per feature
 │   ├── config.py            # settings from environment variables
-│   ├── database.py          # SQLAlchemy set-up (db), creates the tables, init-db command
+│   ├── database.py          # SQLAlchemy (db) and Flask-Migrate set-up, up-to-date check
 │   ├── categories.py        # category list and chart colours
 │   ├── models.py            # Entry base model (shared by expenses and income)
 │   ├── repository.py        # Repository base class: session + one transaction per save
@@ -156,7 +184,7 @@ python-finance-tracker/
 │       ├── script.js        # chart rendering (expenses page and dashboard)
 │       └── confirm.js       # asks before delete / remove (every page)
 ├── tests/
-│   ├── conftest.py          # app, client and conn fixtures (temporary database)
+│   ├── conftest.py          # app, client and session fixtures (temporary, migrated database)
 │   ├── test_app_factory.py
 │   ├── test_budgets.py      # budgets page, repository, rules and validation
 │   ├── test_dashboard.py    # months, balance, budget progress, recent activity, quick add
@@ -165,8 +193,13 @@ python-finance-tracker/
 │   ├── test_expenses.py     # routes, filters, export, charts
 │   ├── test_importer.py     # import-json: good, bad and partly bad files
 │   ├── test_income.py       # income page, repository, rules and validation
+│   ├── test_migrations.py   # new and old databases upgrade, data kept, models match migrations
 │   ├── test_performance.py  # expenses page and dashboard under 2 s with 1,000 expenses
 │   └── test_validation.py   # shared parsers and redirect_back
+├── migrations/
+│   ├── env.py               # Alembic set-up (made by flask db init)
+│   └── versions/            # one file per database change, applied in order
+│       └── 0001_create_tables.py
 ├── pyproject.toml           # dependencies
 └── uv.lock                  # pinned versions
 ```
@@ -220,7 +253,7 @@ Each income entry is one row in the `income` table, kept apart from expenses:
 | `amount` | REAL    | greater than 0                         |
 | `date`   | TEXT    | `YYYY-MM-DD`                           |
 
-New tables are created on startup, so an existing database gets them without losing data.
+Tables are created and changed only by migrations (`flask db upgrade`), so an existing database gets every change without losing data.
 
 Categories: Food, Transport, Rent, Utilities, Health, Entertainment, Education, Business, Other.
 

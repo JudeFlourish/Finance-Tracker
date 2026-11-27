@@ -1,5 +1,7 @@
 import pytest
 
+from flask_migrate import upgrade
+
 from finance_tracker import create_app
 from finance_tracker.database import db
 
@@ -7,10 +9,14 @@ from finance_tracker.database import db
 @pytest.fixture
 def app(tmp_path):
     # every test gets its own empty database, so the real one is never touched
-    return create_app({
+    app = create_app({
         "TESTING": True,
         "DATABASE": str(tmp_path / "test.db"),
     })
+    # the real migrations, so tests use exactly the tables everyone else gets
+    with app.app_context():
+        upgrade()
+    return app
 
 
 @pytest.fixture
