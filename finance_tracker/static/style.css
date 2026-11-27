@@ -43,6 +43,19 @@ body {
     color: #e2e8f0;
 }
 
+/* right side of the nav bar: Register, or who is logged in */
+.nav-account {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.nav-user {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
 /* the page you are on */
 .nav-link.active {
     color: #e2e8f0;
@@ -214,6 +227,13 @@ h2 {
 
 .row .field {
     flex: 1;
+}
+
+/* a short help text under a form field */
+.hint {
+    color: #94a3b8;
+    font-size: 12px;
+    margin-top: 4px;
 }
 
 label {
