@@ -45,7 +45,9 @@ def test_add_saves_expense(client, add_expense, repo):
     assert response.status_code == 302
     assert messages(client) == ["Expense added."]
     [saved] = repo.list()
-    assert saved == Expense(id=saved.id, description="Bus", amount=3.0, date="2026-11-05", category="Other")
+    assert saved.to_dict() == {
+        "id": saved.id, "description": "Bus", "amount": 3.0, "date": "2026-11-05", "category": "Other",
+    }
 
 
 @pytest.mark.parametrize("fields, message", [
@@ -97,9 +99,9 @@ def test_edit_saves_changes(client, repo, groceries):
     assert response.status_code == 302
     assert response.location == "/expenses/"
     assert messages(client) == ["Expense updated."]
-    assert repo.get(groceries) == Expense(
-        id=groceries, description="Groceries Updated", amount=30.75, date="2026-10-02", category="Health",
-    )
+    assert repo.get(groceries).to_dict() == {
+        "id": groceries, "description": "Groceries Updated", "amount": 30.75, "date": "2026-10-02", "category": "Health",
+    }
 
 
 def test_change_shows_in_list_straight_away(client, groceries):

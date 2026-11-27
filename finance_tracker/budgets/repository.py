@@ -20,7 +20,7 @@ class BudgetRepository:
     def save(self, budget):
         """Create the category's budget, or change its limit if it already has one.
 
-        There is only ever one budget per category (UNIQUE in schema.sql),
+        There is only ever one budget per category (unique in budgets/models.py),
         so setting a budget again is the same as changing it.
         """
         with self.conn:  # one transaction: commits, or rolls back on error

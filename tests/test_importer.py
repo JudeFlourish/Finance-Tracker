@@ -49,9 +49,9 @@ def test_imports_old_file_with_same_values(run_import, conn):
     result = run_import(OLD_FILE)
     assert result.exit_code == 0
     assert result.output.strip() == "Imported 2 expenses."
-    assert saved(conn) == [
-        Expense(id=1, description="Lunch", amount=12.5, date="2026-11-01", category="Food"),
-        Expense(id=2, description="Bus", amount=3.0, date="2026-11-05", category="Transport"),
+    assert [e.to_dict() for e in saved(conn)] == [
+        {"id": 1, "description": "Lunch", "amount": 12.5, "date": "2026-11-01", "category": "Food"},
+        {"id": 2, "description": "Bus", "amount": 3.0, "date": "2026-11-05", "category": "Transport"},
     ]
 
 

@@ -1,13 +1,12 @@
-"""SQLite connection handling. The only module that knows how to connect.
+"""Plain sqlite3 connection for the repositories that still write their own SQL.
 
-One connection is opened per request (stored on flask.g) and closed when the
-request ends. Repositories get the connection passed in, they never open one.
+The tables themselves are created by SQLAlchemy (database.py). One connection
+is opened per request (stored on flask.g) and closed when the request ends.
+Repositories get the connection passed in, they never open one.
 """
 import sqlite3
 
-import click
 from flask import current_app, g
-from flask.cli import with_appcontext
 
 
 def connect(path):
@@ -31,24 +30,5 @@ def close_db(exception=None):
         conn.close()
 
 
-def init_db(conn):
-    """Create the tables if they are missing. Safe to run more than once."""
-    with current_app.open_resource("schema.sql") as f:
-        conn.executescript(f.read().decode("utf-8"))
-    conn.commit()
-
-
-@click.command("init-db")
-@with_appcontext
-def init_db_command():
-    """Create the database tables."""
-    init_db(get_db())
-    click.echo("Database is ready.")
-
-
 def init_app(app):
     app.teardown_appcontext(close_db)
-    app.cli.add_command(init_db_command)
-    # create the tables on startup, so a fresh clone just works
-    with app.app_context():
-        init_db(get_db())

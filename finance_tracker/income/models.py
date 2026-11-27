@@ -1,8 +1,17 @@
-from dataclasses import dataclass
+from sqlalchemy import Index, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
-from ..models import Entry
+from ..models import Entry, entry_checks, not_blank
 
 
-@dataclass(kw_only=True)
+# money coming in (US-04), kept apart from expenses
 class Income(Entry):
-    source: str  # where the money came from, e.g. "Salary"
+    __tablename__ = "income"
+    __table_args__ = (
+        *entry_checks(),
+        not_blank("source"),
+        Index("idx_income_date", "date"),
+        {"sqlite_autoincrement": True},
+    )
+
+    source: Mapped[str] = mapped_column(Text)  # where the money came from, e.g. "Salary"

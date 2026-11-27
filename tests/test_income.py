@@ -46,7 +46,7 @@ def test_income_is_an_entry():
 
 def test_add_returns_id_and_get_reads_it_back(repo):
     new_id = repo.add(make())
-    assert repo.get(new_id) == Income(id=new_id, source="Salary", amount=1500, date="2026-11-01")
+    assert repo.get(new_id).to_dict() == {"id": new_id, "source": "Salary", "amount": 1500, "date": "2026-11-01"}
 
 
 def test_get_unknown_id_returns_none(repo):
@@ -135,9 +135,8 @@ def test_existing_database_gets_income_table_on_start(tmp_path):
 # validate_income
 
 def test_validate_income():
-    assert validate_income({"source": " Salary ", "amount": "1500", "date": "2026-11-01"}) == Income(
-        source="Salary", amount=1500.0, date="2026-11-01",
-    )
+    income = validate_income({"source": " Salary ", "amount": "1500", "date": "2026-11-01"})
+    assert income.to_dict() == {"id": None, "source": "Salary", "amount": 1500.0, "date": "2026-11-01"}
 
 
 @pytest.mark.parametrize("form, message", [
@@ -192,7 +191,7 @@ def test_add_income(client, repo, add_income):
     assert response.location == "/income/"
     assert messages(client) == ["Income added."]
     [saved] = repo.list()
-    assert saved == Income(id=saved.id, source="Salary", amount=1500.0, date="2026-11-01")
+    assert saved.to_dict() == {"id": saved.id, "source": "Salary", "amount": 1500.0, "date": "2026-11-01"}
 
 
 @pytest.mark.parametrize("fields, message", [
