@@ -3,11 +3,23 @@ import sqlite3
 
 import pytest
 from alembic.autogenerate import compare_metadata
+from alembic.config import Config
 from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from flask_migrate import downgrade, upgrade
 
 from finance_tracker import create_app
-from finance_tracker.database import db, is_up_to_date
+from finance_tracker.database import MIGRATIONS_DIR, db, is_up_to_date
+
+
+def latest_revision():
+    config = Config()
+    config.set_main_option("script_location", MIGRATIONS_DIR)
+    return ScriptDirectory.from_config(config).get_current_head()
+
+
+# the newest file in migrations/versions/, so the tests don't change with every migration
+LATEST = latest_revision()
 
 # exactly what finance_tracker/schema.sql created before migrations existed
 OLD_SCHEMA = """
@@ -95,7 +107,7 @@ def old_db(tmp_path):
 def test_upgrade_creates_every_table(new_db):
     tables = {name for (name,) in query(new_db, "SELECT name FROM sqlite_master WHERE type = 'table'")}
     assert {"expenses", "income", "budgets", "alembic_version"} <= tables
-    assert query(new_db, "SELECT version_num FROM alembic_version") == [("0001",)]
+    assert query(new_db, "SELECT version_num FROM alembic_version") == [(LATEST,)]
 
 
 def test_migrations_match_the_models(new_db):
@@ -119,7 +131,7 @@ def test_downgrade_to_the_start_and_up_again(new_db):
         tables = {name for (name,) in query(new_db, "SELECT name FROM sqlite_master WHERE type = 'table'")}
         assert not {"expenses", "income", "budgets"} & tables
         upgrade()
-    assert query(new_db, "SELECT version_num FROM alembic_version") == [("0001",)]
+    assert query(new_db, "SELECT version_num FROM alembic_version") == [(LATEST,)]
 
 
 def test_is_up_to_date(tmp_path):
@@ -207,7 +219,7 @@ def test_bad_old_rows_stop_the_upgrade_and_change_nothing(tmp_path, caplog):
     run_sql(path, "DELETE FROM expenses WHERE id IN (2, 3)")
     upgrade_db(path)
     assert query(path, "SELECT id, description FROM expenses") == [(1, "Lunch")]
-    assert query(path, "SELECT version_num FROM alembic_version") == [("0001",)]
+    assert query(path, "SELECT version_num FROM alembic_version") == [(LATEST,)]
 
 
 def test_duplicate_old_budgets_stop_the_upgrade(tmp_path, caplog):

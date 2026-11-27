@@ -51,6 +51,7 @@ migrate = Migrate(directory=MIGRATIONS_DIR, render_as_batch=True)
 
 def import_models():
     """A model's table is only known to SQLAlchemy once its module is imported."""
+    from .auth import models as _auth  # noqa: F401
     from .budgets import models as _budgets  # noqa: F401
     from .expenses import models as _expenses  # noqa: F401
     from .income import models as _income  # noqa: F401

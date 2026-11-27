@@ -147,6 +147,11 @@ python-finance-tracker/
 │   ├── web.py               # redirect_back(), nav bar links, 404 page
 │   ├── charts.py            # chart data (totals per category and per day), expenses only
 │   ├── importer.py          # flask import-json command (old expenses.json)
+│   ├── auth/
+│   │   ├── models.py        # User model (users table: email, password hash, created_at)
+│   │   ├── passwords.py     # hash_password() / check_password() (werkzeug, scrypt + salt)
+│   │   ├── validation.py    # validate_registration(): email and password rules
+│   │   └── repository.py    # UserRepository: add, get, get_by_email
 │   ├── expenses/
 │   │   ├── models.py        # Expense model (expenses table)
 │   │   ├── filters.py       # ExpenseFilter (date range and category from the url, as query conditions)
@@ -186,6 +191,7 @@ python-finance-tracker/
 ├── tests/
 │   ├── conftest.py          # app, client and session fixtures (temporary, migrated database)
 │   ├── test_app_factory.py
+│   ├── test_auth.py         # password hashing, registration rules, UserRepository
 │   ├── test_budgets.py      # budgets page, repository, rules and validation
 │   ├── test_dashboard.py    # months, balance, budget progress, recent activity, quick add
 │   ├── test_db.py           # tables, constraints, SQLAlchemy session
@@ -199,7 +205,8 @@ python-finance-tracker/
 ├── migrations/
 │   ├── env.py               # Alembic set-up (made by flask db init)
 │   └── versions/            # one file per database change, applied in order
-│       └── 0001_create_tables.py
+│       ├── 0001_create_tables.py
+│       └── 0002_create_the_users_table.py
 ├── pyproject.toml           # dependencies
 └── uv.lock                  # pinned versions
 ```
